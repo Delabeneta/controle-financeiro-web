@@ -1,0 +1,123 @@
+### 1. Login do super admin
+# @name adminLogin
+POST http://localhost:3000/auth/login
+Content-Type: application/json
+
+{
+  "email": "super@email.com",
+  "password": "123456"
+}
+
+### 2. Guardar token (CORRIGIDO)
+@tokenAdmin = {{adminLogin.response.body.access_token}}
+
+### 3. Criar organização (com token)
+POST http://localhost:3000/admin/create-organization
+Authorization: Bearer {{tokenAdmin}} 
+Content-Type: application/json
+
+{
+  "organizationNome": "org223",
+  "adminNome": "a1",
+  "adminEmail": "a1233@email.com",
+  "adminSenha": "123456"
+}
+
+### 4. Criar usuário comum (CORRIGIDO)
+POST http://localhost:3000/users
+Authorization: Bearer {{tokenAdmin}}
+Content-Type: application/json
+
+{
+  "nome": "joao",
+  "email": "rafael122@email.com",
+  "senha": "123456",
+  "organizationId": "09a0d868-762f-41c4-82d4-efddd990179e",
+  "role": "LIDER"
+}
+
+### 5. Listar usuários (CORRIGIDO)
+GET http://localhost:3000/users
+Authorization: Bearer {{tokenAdmin}}
+
+### 6. Criar super admin via endpoint admin
+POST http://localhost:3000/users/admin
+Authorization: Bearer {{tokenAdmin}}
+Content-Type: application/json
+
+{
+  "nome": "Super Admin 2",
+  "email": "super1@email.com",
+  "senha": "123456"
+}
+
+
+###
+# @name createGroupMaca
+POST http://localhost:3000/groups
+Authorization: Bearer {{tokenAdmin}}
+Content-Type: application/json
+
+{
+  "nome": "FAC",
+  "organizationId": "178321a7-5f9d-452e-9386-fa59bf255cc8"
+}
+###
+@groupMacaId = {{createGroupMaca.response.body.id}}
+###
+
+###
+POST http://localhost:3000/transactions
+Authorization: Bearer {{tokenAdmin}}
+Content-Type: application/json
+
+{
+  "tipo": "ENTRADA",
+  "valor": 500.00,
+  "descricao": "Arrecadação do evento de verão",
+  "data": "2026-03-01T00:00:00.000Z",
+  "groupId": "b61bc466-cab7-4821-a393-629d685ad8ab"
+}
+
+###
+
+
+### 1. Criar um usuário primeiro
+POST http://localhost:3000/users
+Content-Type: application/json
+
+{
+  "nome": "Admin Teste",
+  "email": "admin@teste.com",
+  "senha": "123456",
+  "organizationId": "id-da-org",
+  "role": "SUPER_ADMIN"
+}
+
+### 2. Fazer login com o usuário
+POST http://localhost:3000/auth/login
+Content-Type: application/json
+Authorization: Bearer {{tokenAdmin}}
+
+{
+  "email": "a12@teste.com",
+  "password": "123456"
+}
+
+### 3. Copiar o token retornado (exemplo)
+# Response esperado: { "access_token": "eyJhbGciOiJIUzI1NiIs..." }
+
+### 4. Usar o token para criar transação
+@token = eyJhbGciOiJIUzI1NiIs...  // Cole o token aqui
+
+POST http://localhost:3000/transactions
+Authorization: Bearer {{tokenAdmin}}
+Content-Type: application/json
+
+{
+  "tipo": "ENTRADA",
+  "valor": 500.00,
+  "descricao": "Arrecadação do evento de verão",
+  "data": "2026-03-01T00:00:00.000Z",
+  "groupId": "1b121c04-96a9-457f-9daa-662cb9af9f3b"
+}

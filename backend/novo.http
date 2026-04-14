@@ -1,0 +1,319 @@
+### ============================================
+### 1. LOGINS
+### ============================================
+
+### 1.1 Login SUPER_ADMIN
+# @name loginSuperAdmin
+POST http://localhost:3000/auth/login
+Content-Type: application/json
+
+{
+  "email": "super@email.com",
+  "password": "123456"
+}
+
+### 1.2 Login ADMIN
+# @name loginAdmin
+POST http://localhost:3000/auth/login
+Content-Type: application/json
+
+{
+  "email": "priscila@gmail.com",
+  "password": "123456"
+}
+
+### 1.3 Login LÍDER Walber (FAC)
+# @name loginWalber
+POST http://localhost:3000/auth/login
+Content-Type: application/json
+
+{
+  "email": "Walber@email.com",
+  "password": "123456"
+}
+
+### 1.4 Login LÍDER JP (JOAM)
+# @name loginJP
+POST http://localhost:3000/auth/login
+Content-Type: application/json
+
+{
+  "email": "jp@email.com",
+  "password": "123456"
+}
+
+### ============================================
+### VARIÁVEIS - TOKENS
+### ============================================
+
+@tokenSuper = {{loginSuperAdmin.response.body.access_token}}
+@tokenAdmin = {{loginAdmin.response.body.access_token}}
+@tokenWalber = {{loginWalber.response.body.access_token}}
+@tokenJP = {{loginJP.response.body.access_token}}
+
+### ============================================
+### 2. ORGANIZAÇÕES
+### ============================================
+
+### 2.1 Criar Organização
+POST http://localhost:3000/admin/create-organization
+Authorization: Bearer {{tokenSuper}}
+Content-Type: application/json
+
+{
+  "organizationNome": "Setor Juventude",
+  "adminNome": "Priscila",
+  "adminEmail": "priscila@email.com",
+  "adminSenha": "123456"
+}
+
+### 2.2 Listar Organizações (pegar o ID)
+GET http://localhost:3000/admin/organizations
+Authorization: Bearer {{tokenSuper}}
+
+### ID da Organização (use o ID retornado acima)
+@orgId = 178321a7-5f9d-452e-9386-fa59bf255cc8
+
+### ============================================
+### 3. GRUPOS
+### ============================================
+
+### 3.1 Criar Grupo FAC
+POST http://localhost:3000/groups
+Authorization: Bearer {{tokenSuper}}
+Content-Type: application/json
+
+{
+  "nome": "FAC",
+  "organizationId": "{{orgId}}",
+  "saldoInicial": 500
+}
+
+### 3.2 Criar Grupo JOAM
+POST http://localhost:3000/groups
+Authorization: Bearer {{tokenSuper}}
+Content-Type: application/json
+
+{
+  "nome": "JOAM",
+  "organizationId": "{{orgId}}",
+  "saldoInicial": 100
+}
+
+### 3.3 Listar todos os grupos (pegar os IDs)
+GET http://localhost:3000/groups
+Authorization: Bearer {{tokenSuper}}
+
+### IDs dos grupos
+@groupIdFAC = 48a26280-edf6-4947-916d-544553cf03ee
+@groupIdJOAM = 727d64c6-39e7-4d09-ba81-2415a015ac13
+
+### 3.4 Ver saldo do grupo FAC
+GET http://localhost:3000/groups/{{groupIdFAC}}/saldos
+Authorization: Bearer {{tokenSuper}}
+
+### 3.5 Ver saldo do grupo JOAM
+GET http://localhost:3000/groups/{{groupIdJOAM}}/saldos
+Authorization: Bearer {{tokenSuper}}
+
+### ============================================
+### 4. USUÁRIOS
+### ============================================
+
+### 4.1 Criar Líder Walber (FAC)
+POST http://localhost:3000/users
+Authorization: Bearer {{tokenSuper}}
+Content-Type: application/json
+
+{
+  "nome": "Walber",
+  "email": "Walber@email.com",
+  "senha": "123456",
+  "organizationId": "{{orgId}}",
+  "role": "LIDER"
+}
+
+### 4.2 Criar Líder JP (JOAM)
+POST http://localhost:3000/users
+Authorization: Bearer {{tokenSuper}}
+Content-Type: application/json
+
+{
+  "nome": "JP",
+  "email": "jp@email.com",
+  "senha": "123456",
+  "organizationId": "{{orgId}}",
+  "role": "LIDER"
+}
+
+### 4.3 Listar usuários (pegar os IDs)
+GET http://localhost:3000/users
+Authorization: Bearer {{tokenSuper}}
+
+### IDs dos usuários
+@userIdWalber = 222beb5d-dba9-4edb-a2f6-0ced074c8646
+@userIdJP = 12345678-1234-1234-1234-123456789012
+
+### ============================================
+### 5. VINCULAR LÍDERES AOS GRUPOS
+### ============================================
+
+### 5.1 Vincular Walber ao grupo FAC
+POST http://localhost:3000/user-groups
+Authorization: Bearer {{tokenSuper}}
+Content-Type: application/json
+
+{
+  "userId": "{{userIdWalber}}",
+  "groupId": "{{groupIdFAC}}",
+  "permission": "EDITOR"
+}
+
+### 5.2 Vincular JP ao grupo JOAM
+POST http://localhost:3000/user-groups
+Authorization: Bearer {{tokenSuper}}
+Content-Type: application/json
+
+{
+  "userId": "{{userIdJP}}",
+  "groupId": "{{groupIdJOAM}}",
+  "permission": "EDITOR"
+}
+
+### 5.3 Verificar grupos do Walber
+GET http://localhost:3000/users/me/groups
+Authorization: Bearer {{tokenWalber}}
+
+### 5.4 Verificar grupos do JP
+GET http://localhost:3000/users/me/groups
+Authorization: Bearer {{tokenJP}}
+
+### ============================================
+### 6. TRANSAÇÕES - FAC (Walber)
+### ============================================
+
+### 6.1 FAC - Venda de doces (Entrada)
+POST http://localhost:3000/transactions
+Authorization: Bearer {{tokenWalber}}
+Content-Type: application/json
+
+{
+  "tipo": "ENTRADA",
+  "valor": 150.00,
+  "paymentType": "DINHEIRO",
+  "descricao": "Venda de brigadeiros - Festa Junina",
+  "data": "2026-04-10T10:00:00.000Z",
+  "groupId": "{{groupIdFAC}}"
+}
+
+### 6.2 FAC - Venda de cupcakes (Entrada)
+POST http://localhost:3000/transactions
+Authorization: Bearer {{tokenWalber}}
+Content-Type: application/json
+
+{
+  "tipo": "ENTRADA",
+  "valor": 85.50,
+  "paymentType": "PIX",
+  "descricao": "Venda de cupcakes - Café da manhã",
+  "data": "2026-04-11T14:30:00.000Z",
+  "groupId": "{{groupIdFAC}}"
+}
+
+### 6.3 FAC - Compra de ingredientes (Saída)
+POST http://localhost:3000/transactions
+Authorization: Bearer {{tokenWalber}}
+Content-Type: application/json
+
+{
+  "tipo": "SAIDA",
+  "valor": 120.00,
+  "paymentType": "PIX",
+  "descricao": "Compra de ingredientes - Fornecedor",
+  "data": "2026-04-12T09:00:00.000Z",
+  "groupId": "{{groupIdFAC}}"
+}
+
+### ============================================
+### 7. TRANSAÇÕES - JOAM (JP)
+### ============================================
+
+### 7.1 JOAM - Venda de refrigerantes (Entrada)
+POST http://localhost:3000/transactions
+Authorization: Bearer {{tokenJP}}
+Content-Type: application/json
+
+{
+  "tipo": "ENTRADA",
+  "valor": 200.00,
+  "paymentType": "PIX",
+  "descricao": "Venda de refrigerantes - Evento de abertura",
+  "data": "2026-04-10T15:00:00.000Z",
+  "groupId": "{{groupIdJOAM}}"
+}
+
+### 7.2 JOAM - Venda de Coca-Cola (Entrada)
+POST http://localhost:3000/transactions
+Authorization: Bearer {{tokenJP}}
+Content-Type: application/json
+
+{
+  "tipo": "ENTRADA",
+  "valor": 120.00,
+  "paymentType": "DINHEIRO",
+  "descricao": "Venda de Coca-Cola - Festa",
+  "data": "2026-04-11T16:30:00.000Z",
+  "groupId": "{{groupIdJOAM}}"
+}
+
+### 7.3 JOAM - Compra de estoque (Saída)
+POST http://localhost:3000/transactions
+Authorization: Bearer {{tokenJP}}
+Content-Type: application/json
+
+{
+  "tipo": "SAIDA",
+  "valor": 250.00,
+  "paymentType": "TRANSFERENCIA",
+  "descricao": "Compra de estoque - Distribuidora",
+  "data": "2026-04-12T08:00:00.000Z",
+  "groupId": "{{groupIdJOAM}}"
+}
+
+### ============================================
+### 8. VERIFICAÇÕES FINAIS
+### ============================================
+
+### 8.1 Ver saldo atual do FAC
+GET http://localhost:3000/groups/{{groupIdFAC}}/saldos
+Authorization: Bearer {{tokenSuper}}
+
+### 8.2 Ver saldo atual do JOAM
+GET http://localhost:3000/groups/{{groupIdJOAM}}/saldos
+Authorization: Bearer {{tokenSuper}}
+
+### 8.3 Ver transações do FAC
+GET http://localhost:3000/transactions/group/{{groupIdFAC}}
+Authorization: Bearer {{tokenWalber}}
+
+### 8.4 Ver transações do JOAM
+GET http://localhost:3000/transactions/group/{{groupIdJOAM}}
+Authorization: Bearer {{tokenJP}}
+
+### 8.5 Ver todas transações (Super Admin)
+GET http://localhost:3000/transactions
+Authorization: Bearer {{tokenSuper}}
+
+### ============================================
+### RESUMO FINAL
+### ============================================
+
+### Credenciais:
+### Super Admin: super@email.com / 123456
+### Admin: priscila@email.com / 123456
+### Líder FAC (Walber): Walber@email.com / 123456
+### Líder JOAM (JP): jp@email.com / 123456
+
+### Grupos:
+### FAC - Saldo Inicial: R$ 500 + transações
+### JOAM - Saldo Inicial: R$ 200 + transações

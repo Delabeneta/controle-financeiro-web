@@ -1,0 +1,128 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model Organization {
+  id        String   @id @default(uuid())
+  nome      String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  deletedAt DateTime?
+
+  users  User[] 
+  groups Group[]
+  
+  createdBy User?   @relation("OrganizationCreator", fields: [createdById], references: [id])
+  createdById String?
+
+  @@index([deletedAt])
+}
+
+model User {
+  id             String   @id @default(uuid())
+  nome           String
+  email          String   @unique
+  senha          String
+  role           Role
+  organizationId String? 
+  organization   Organization? @relation(fields: [organizationId], references: [id], onDelete: SetNull)
+  
+  groups        UserGroup[]
+  transactions  Transaction[] @relation("UserTransactions")
+  createdGroups Group[]       @relation("GroupCreator")  // ← Relação com Group
+  createdOrgs   Organization[] @relation("OrganizationCreator")  // ← Relação com Organization
+  
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  deletedAt      DateTime?
+
+  @@index([deletedAt])
+}
+
+model Group {
+  id             String   @id @default(uuid())
+  nome           String
+  saldoInicial   Decimal? @db.Decimal(10, 2) @map("saldo_inicial")
+  organizationId String   @map("organization_id")
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  leaderName String?
+
+  
+  organization   Organization   @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  users          UserGroup[]
+  transactions   Transaction[]
+  
+  createdBy User?   @relation("GroupCreator", fields: [createdById], references: [id])
+  createdById String?
+
+
+  @@index([organizationId])
+}
+
+model UserGroup {
+  id         String         @id @default(uuid())
+  userId     String         @map("user_id")
+  groupId    String         @map("group_id")
+  permission GroupPermission
+  createdAt  DateTime       @default(now())
+  createdBy  String?        @map("created_by")
+
+  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  group Group @relation(fields: [groupId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, groupId])
+  @@index([userId])
+  @@index([groupId])
+}
+
+model Transaction {
+  id          String          @id @default(uuid())
+  groupId     String          @map("group_id")
+  type        TransactionType
+  valor       Decimal         @db.Decimal(10, 2)
+  descricao   String
+  paymentType PaymentType?    @map("payment_type")
+  data        DateTime        @default(now())
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+  createdBy   String?         @map("created_by")
+
+  group Group @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  user  User? @relation("UserTransactions", fields: [createdBy], references: [id], onDelete: SetNull)
+
+  @@index([groupId])
+  @@index([createdBy])
+  @@index([paymentType])
+  @@index([type])
+}
+
+enum Role {
+  SUPER_ADMIN
+  ADMIN
+  LIDER
+  MEMBRO
+}
+
+enum GroupPermission {
+  READ_ONLY
+  EDITOR
+}
+
+enum TransactionType {
+  ENTRADA
+  SAIDA
+}
+
+enum PaymentType {
+  PIX
+  DINHEIRO
+  CARTAO_CREDITO
+  CARTAO_DEBITO
+  TRANSFERENCIA
+}

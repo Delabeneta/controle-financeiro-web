@@ -4,13 +4,19 @@ import { ValidationPipe } from '@nestjs/common';
 import { Request, Response, NextFunction } from 'express';
 
 async function bootstrap() {
+  console.log('🚀 Iniciando aplicação...');
+
   const app = await NestFactory.create(AppModule);
+
+  console.log('✅ Nest criado');
 
   app.useGlobalPipes(
     new ValidationPipe({
       whitelist: true,
     }),
   );
+
+  console.log('✅ Pipes ok');
 
   app.enableCors({
     origin: 'https://controlefinanceiro-theta.vercel.app',
@@ -19,8 +25,14 @@ async function bootstrap() {
     allowedHeaders: ['Content-Type', 'Authorization'],
   });
 
+  console.log('✅ CORS ok');
+
   const port = Number(process.env.PORT) || 3000;
+
+  console.log('🔥 Tentando subir servidor...');
+
   await app.listen(port, '0.0.0.0');
-  console.log(`Server running on port ${port}`);
+
+  console.log(`🚀 Server running on port ${port}`);
 }
 void bootstrap();

@@ -10,12 +10,18 @@ async function bootstrap() {
     }),
   );
   app.enableCors({
-    origin: '*', //'http://localhost:3001', // URL do frontend
-    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'],
+    origin: [
+      'https://controlefinanceiro-theta.vercel.app',
+      'https://controle-financeiro-web.vercel.app',
+      'http://localhost:3000',
+      'http://localhost:3001',
+    ],
+    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS', 'HEAD'],
     credentials: true,
     allowedHeaders: ['Content-Type', 'Authorization'],
   });
 
   await app.listen(process.env.PORT ?? 3000);
+  console.log(`Server running on port ${process.env.PORT ?? 3000}`);
 }
 void bootstrap();

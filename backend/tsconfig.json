@@ -5,7 +5,7 @@
     "target": "ES2020",
 
     "outDir": "./dist",
-    "rootDir": "./src",
+    "rootDir": "./",
 
     "baseUrl": "./",
     "paths": {
@@ -35,5 +35,10 @@
       "./src/types"
     ]
   },
+    "include": ["src/**/*", "prisma.config.ts"], 
+    "exclude": [
+    "node_modules",
+    "test",
+    "**/*.spec.ts"],
   "ignoreDeprecations": "6.0"
 }

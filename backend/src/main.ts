@@ -12,7 +12,7 @@ async function bootstrap() {
   app.enableCors({
     origin: [
       'https://controlefinanceiro-theta.vercel.app',
-      'https://controle-financeiro-web.vercel.app',
+      'https://controle-financeiro-web-back.vercel.app',
       'http://localhost:3000',
       'http://localhost:3001',
     ],

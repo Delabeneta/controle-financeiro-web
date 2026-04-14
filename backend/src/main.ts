@@ -6,14 +6,12 @@ import { Request, Response, NextFunction } from 'express';
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
-  // ✅ Validação
   app.useGlobalPipes(
     new ValidationPipe({
       whitelist: true,
     }),
   );
 
-  // ✅ CORS correto (SEM * quando usa credentials)
   app.enableCors({
     origin: 'https://controlefinanceiro-theta.vercel.app',
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
@@ -21,7 +19,6 @@ async function bootstrap() {
     allowedHeaders: ['Content-Type', 'Authorization'],
   });
 
-  // 🔥 SOLUÇÃO DO SEU ERRO (OPTIONS na Vercel)
   app.use((req: Request, res: Response, next: NextFunction) => {
     if (req.method === 'OPTIONS') {
       res.header(

@@ -21,8 +21,9 @@
     "noImplicitAny": false,
     "strictBindCallApply": false,
     "noFallthroughCasesInSwitch": false,
-    "typeRoots": ["./node_modules/@types", "./src/types"]
+    "typeRoots": ["lib/**/*","./node_modules/@types", "./src/types"]
     },
-    "ignoreDeprecations": "6.0"  // ← ADICIONE ESTA LINHA
+    "ignoreDeprecations": "6.0"  
+    
 
 }

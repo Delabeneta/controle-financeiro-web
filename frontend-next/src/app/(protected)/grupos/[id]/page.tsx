@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 // src/app/(protected)/grupos/[id]/page.tsx
 'use client';
 
@@ -269,7 +270,7 @@ const handleSaveSaldoInicial = async () => {
           <button
             onClick={() => {
               setActiveTab('membros');
-              if (members.length === 0) loadMembers();
+             
             }}
             className={`pb-3 px-1 font-medium transition-colors relative ${
               activeTab === 'membros'

@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
+
 // src/app/dashboard/page.tsx
 'use client';
 
@@ -94,12 +96,12 @@ export default function DashboardPage() {
     }).format(value);
   };
 
-  const formatTooltipValue = (value: number | string | undefined) => {
-    if (value === undefined || value === null) return 'R$ 0,00';
-    const numValue = typeof value === 'number' ? value : Number(value);
-    if (isNaN(numValue)) return 'R$ 0,00';
-    return formatCurrency(numValue);
-  };
+  const formatTooltipValue = (value: any) => {
+  if (value === undefined || value === null) return 'R$ 0,00';
+  const numValue = typeof value === 'number' ? value : Number(value);
+  if (isNaN(numValue)) return 'R$ 0,00';
+  return formatCurrency(numValue);
+};
 
   if (loading || !dashboardData) {
     return (

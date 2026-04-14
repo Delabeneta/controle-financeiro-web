@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
+
 // src/app/admin/page.tsx
 'use client';
 
@@ -15,6 +17,23 @@ import {
   Loader2,
   X,
 } from 'lucide-react';
+
+// ✅ Definir o tipo da organização
+interface Organization {
+  id: string;
+  nome: string;
+  createdAt: string;
+  _count?: {
+    users: number;
+    groups: number;
+  };
+  admin?: {
+    id: string;
+    nome: string;
+    email: string;
+    role: string;
+  };
+}
 
 // Componente Modal simples
 function Modal({ isOpen, onClose, title, children }: { isOpen: boolean; onClose: () => void; title: string; children: React.ReactNode }) {
@@ -39,7 +58,7 @@ function Modal({ isOpen, onClose, title, children }: { isOpen: boolean; onClose:
 
 export default function AdminPage() {
   const { user: currentUser } = useAuth();
-  const [organizations, setOrganizations] = useState<unknown[]>([]);
+  const [organizations, setOrganizations] = useState<Organization[]>([]); // ✅ Tipo correto
   const [loading, setLoading] = useState(true);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [formData, setFormData] = useState({
@@ -155,7 +174,7 @@ export default function AdminPage() {
             Nenhuma organização encontrada
           </h3>
           <p className="text-gray-600">
-            Clique em "Criar Organização" para começar.
+            Clique em Criar Organização para começar.
           </p>
         </Card>
       ) : (

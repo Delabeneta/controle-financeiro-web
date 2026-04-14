@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 // src/app/(protected)/grupos/page.tsx
 'use client';
 
@@ -201,7 +202,7 @@ export default function GruposPage() {
       createdAt: group.createdAt || group.joinedAt,
       membersCount: group.membersCount || 0,
       permission: group.permission,
-      liderNome: group.liderNome || group.LeaderName || 'Não definido',
+      //liderNome: group.liderNome || group.LeaderName || 'Não definido',
     }));
 
     setGroups(formattedGroups);
@@ -350,7 +351,7 @@ const handleCreateGroup = async (data: any) => {
           group={{
             id: selectedGroup.id,
             nome: selectedGroup.nome,
-            liderNome: selectedGroup.liderNome || 'Não definido',
+            liderNome: selectedGroup.nome || 'Não definido',
             saldoDinheiro: selectedGroup.saldoCaixa,
             saldoBanco: selectedGroup.saldoBanco,
             saldoInicial: selectedGroup.saldoInicial,

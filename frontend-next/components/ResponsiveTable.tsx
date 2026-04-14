@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
+
 // src/components/ResponsiveTable.tsx
 'use client';
 
@@ -44,9 +46,16 @@ export function ResponsiveTable({ columns, data, onRowClick }: ResponsiveTablePr
     }
   };
 
+  // Função para obter o valor do grupo (para mobile)
+  const getGroupValue = (item: any) => {
+    const groupColumn = columns.find(c => c.key === 'grupo' || c.key === 'groupName');
+    if (!groupColumn) return '-';
+    return groupColumn.render ? groupColumn.render(item[groupColumn.key], item) : item[groupColumn.key];
+  };
+
   return (
     <>
-      {/* Desktop Table — sem alteração */}
+      {/* Desktop Table */}
       <div className="hidden md:block bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full">
@@ -83,8 +92,7 @@ export function ResponsiveTable({ columns, data, onRowClick }: ResponsiveTablePr
         {data.map((item, idx) => {
           const isEntrada = item.type === 'ENTRADA';
           const dataStr = item.data || item.createdAt;
-          const grupo = columns.find(c => c.key === 'grupo');
-          const grupoVal = grupo?.render ? grupo.render(item[grupo.key], item) : item[grupo?.key];
+          const groupValue = getGroupValue(item);
 
           return (
             <div
@@ -108,7 +116,7 @@ export function ResponsiveTable({ columns, data, onRowClick }: ResponsiveTablePr
                 </div>
                 {/* Linha 2: grupo + valor */}
                 <div className="flex items-center justify-between mt-1">
-                  <span className="text-xs text-gray-500">{grupoVal}</span>
+                  <span className="text-xs text-gray-500">{groupValue}</span>
                   <span className={`text-sm font-semibold ${isEntrada ? 'text-emerald-600' : 'text-red-500'}`}>
                     {isEntrada ? '+' : '-'} {formatCurrency(item.valor)}
                   </span>

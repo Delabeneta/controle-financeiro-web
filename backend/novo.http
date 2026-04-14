@@ -14,12 +14,12 @@ Content-Type: application/json
 
 ### 1.2 Login ADMIN
 # @name loginAdmin
-POST  https://controle-financeiro-web-back.vercel.app/auth/login
+POST http://localhost:3000/auth/login
 Content-Type: application/json
 
 {
-  "email": "priscila@gmail.com",
-  "password": "123456"
+  "email": "priscila@email.com",
+  "password": "senha123"
 }
 
 ### 1.3 Login LÍDER Walber (FAC)

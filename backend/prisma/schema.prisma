@@ -4,78 +4,67 @@ generator client {
 
 datasource db {
   provider = "postgresql"
-
 }
 
 model Organization {
-  id        String   @id @default(uuid())
-  nome      String
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  deletedAt DateTime?
-
-  users  User[] 
-  groups Group[]
-  
-  createdBy User?   @relation("OrganizationCreator", fields: [createdById], references: [id])
+  id          String    @id @default(uuid())
+  nome        String
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  deletedAt   DateTime?
   createdById String?
+  groups      Group[]
+  createdBy   User?     @relation("OrganizationCreator", fields: [createdById], references: [id])
+  users       User[]
 
   @@index([deletedAt])
 }
 
 model User {
-  id             String   @id @default(uuid())
+  id             String         @id @default(uuid())
   nome           String
-  email          String   @unique
+  email          String         @unique
   senha          String
   role           Role
-  organizationId String? 
-  organization   Organization? @relation(fields: [organizationId], references: [id], onDelete: SetNull)
-  
-  groups        UserGroup[]
-  transactions  Transaction[] @relation("UserTransactions")
-  createdGroups Group[]       @relation("GroupCreator")  // ← Relação com Group
-  createdOrgs   Organization[] @relation("OrganizationCreator")  // ← Relação com Organization
-  
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
+  organizationId String?
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
   deletedAt      DateTime?
+  createdGroups  Group[]        @relation("GroupCreator")
+  createdOrgs    Organization[] @relation("OrganizationCreator")
+  transactions   Transaction[]  @relation("UserTransactions")
+  organization   Organization?  @relation(fields: [organizationId], references: [id])
+  groups         UserGroup[]
 
   @@index([deletedAt])
 }
 
 model Group {
-  id             String   @id @default(uuid())
+  id             String        @id @default(uuid())
   nome           String
-  saldoInicial   Decimal? @db.Decimal(10, 2) @map("saldo_inicial")
-  organizationId String   @map("organization_id")
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
-
-  leaderName String?
-
-  
-  organization   Organization   @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-  users          UserGroup[]
+  saldoInicial   Decimal?      @map("saldo_inicial") @db.Decimal(10, 2)
+  organizationId String        @map("organization_id")
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+  leaderName     String?
+  createdById    String?
+  createdBy      User?         @relation("GroupCreator", fields: [createdById], references: [id])
+  organization   Organization  @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   transactions   Transaction[]
-  
-  createdBy User?   @relation("GroupCreator", fields: [createdById], references: [id])
-  createdById String?
-
+  users          UserGroup[]
 
   @@index([organizationId])
 }
 
 model UserGroup {
-  id         String         @id @default(uuid())
-  userId     String         @map("user_id")
-  groupId    String         @map("group_id")
+  id         String          @id @default(uuid())
+  userId     String          @map("user_id")
+  groupId    String          @map("group_id")
   permission GroupPermission
-  createdAt  DateTime       @default(now())
-  createdBy  String?        @map("created_by")
-
-  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
-  group Group @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  createdAt  DateTime        @default(now())
+  createdBy  String?         @map("created_by")
+  group      Group           @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  user       User            @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([userId, groupId])
   @@index([userId])
@@ -93,9 +82,8 @@ model Transaction {
   createdAt   DateTime        @default(now())
   updatedAt   DateTime        @updatedAt
   createdBy   String?         @map("created_by")
-
-  group Group @relation(fields: [groupId], references: [id], onDelete: Cascade)
-  user  User? @relation("UserTransactions", fields: [createdBy], references: [id], onDelete: SetNull)
+  user        User?           @relation("UserTransactions", fields: [createdBy], references: [id])
+  group       Group           @relation(fields: [groupId], references: [id], onDelete: Cascade)
 
   @@index([groupId])
   @@index([createdBy])

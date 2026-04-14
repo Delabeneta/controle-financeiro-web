@@ -15,10 +15,11 @@ async function bootstrap() {
       'https://controle-financeiro-web-back.vercel.app',
       'http://localhost:3000',
       'http://localhost:3001',
+      /\.vercel\.app$/,
     ],
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS', 'HEAD'],
     credentials: true,
-    allowedHeaders: ['Content-Type', 'Authorization'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'Accept'],
   });
 
   await app.listen(process.env.PORT ?? 3000);

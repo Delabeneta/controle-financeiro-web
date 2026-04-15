@@ -104,6 +104,45 @@ export class TransactionsService {
     });
   }
 
+  async findOne(id: string, user: User) {
+    const transaction = await this.prisma.transaction.findUnique({
+      where: { id },
+      include: {
+        group: true,
+        user: { select: { id: true, nome: true } },
+      },
+    });
+
+    if (!transaction) {
+      throw new NotFoundException('Transação não encontrada');
+    }
+
+    // Verificar permissão
+    if (user.role === Role.SUPER_ADMIN) {
+      return transaction;
+    }
+
+    if (user.role === Role.ADMIN) {
+      if (transaction.group.organizationId !== user.organizationId) {
+        throw new ForbiddenException('Sem permissão');
+      }
+      return transaction;
+    }
+
+    if (user.role === Role.LIDER) {
+      const userGroup = await this.prisma.userGroup.findUnique({
+        where: {
+          userId_groupId: { userId: user.id, groupId: transaction.groupId },
+        },
+      });
+      if (!userGroup) {
+        throw new ForbiddenException('Sem permissão');
+      }
+      return transaction;
+    }
+
+    throw new ForbiddenException('Sem permissão');
+  }
   // ==================== UPDATE ====================
   async update(id: string, data: UpdateTransactionDto, userId: string) {
     // Buscar usuário
@@ -145,7 +184,7 @@ export class TransactionsService {
       return this.updateTransaction(id, data);
     }
 
-    // 🔹 LIDER: só pode editar se for EDITOR do grupo
+    /* 🔹 LIDER: só pode editar se for EDITOR do grupo
     if (user.role === Role.LIDER) {
       const userGroup = await this.prisma.userGroup.findUnique({
         where: {
@@ -167,7 +206,7 @@ export class TransactionsService {
       }
 
       return this.updateTransaction(id, data);
-    }
+    } */
 
     throw new ForbiddenException('Sem permissão para editar esta transação');
   }
@@ -180,6 +219,7 @@ export class TransactionsService {
         descricao: data.descricao,
         valor: data.valor,
         paymentType: data.paymentType,
+        type: data.tipo,
         data: data.data ? new Date(data.data) : undefined,
       },
       include: {

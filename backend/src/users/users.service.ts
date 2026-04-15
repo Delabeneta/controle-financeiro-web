@@ -139,7 +139,7 @@ export class UsersService {
 
     if (data.nome) updateData.nome = data.nome;
     if (data.email) updateData.email = data.email;
-    // Se tiver senha, fazer hash
+    if (data.role) updateData.role = data.role;
     if (data.senha) {
       updateData.senha = await this.hashingService.hash(data.senha);
     }

@@ -1,11 +1,32 @@
-### 1. Login do super admin
-# @name adminLogin
-POST https://controlefinaceiroback.onrender.com/auth/login
+### 1. Ver transação antes
+GET http://localhost:10000/transactions/44036792-69ad-44a2-a578-db5f13cf2e1c
+Authorization: Bearer {{tokenAdmin}}
+
+### 2. Editar transação
+PATCH http://localhost:10000/transactions/44036792-69ad-44a2-a578-db5f13cf2e1c
+Authorization: Bearer {{tokenAdmin}}
 Content-Type: application/json
 
 {
-  "email": "super@email.com",
-  "password": "123456"
+  "paymentType": "DINHEIRO",
+  "tipo": "ENTRADA"
+}
+
+### 3. Ver transação depois
+GET http://localhost:3000/transactions/{{transactionId}}
+Authorization: Bearer {{tokenAdmin}}
+
+###
+
+
+### 1. Login do super admin
+# @name adminLogin
+POST http://localhost:10000/auth/login
+Content-Type: application/json
+
+{
+  "email": "super@admin.com",
+  "password": "nevermind9545"
 }
 
 ### 2. Guardar token (CORRIGIDO)

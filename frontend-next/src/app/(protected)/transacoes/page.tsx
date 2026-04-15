@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 // src/app/transacoes/page.tsx
 'use client';
 
@@ -10,11 +11,7 @@ import { Button } from '@/src/components/ui/button';
 import { Breadcrumb } from '@/components/BreadCrumb';
 import { 
   ArrowUpCircle, 
-  ArrowDownCircle, 
-  Calendar, 
-  User, 
-  Filter,
-  Receipt,
+  ArrowDownCircle,
   CreditCard,
   Banknote,
   Wallet,
@@ -22,6 +19,7 @@ import {
   Plus,
 } from 'lucide-react';
 import { ResponsiveTable } from '@/components/ResponsiveTable';
+import { EditTransactionModal } from '@/components/EditTransactionModal';
 
 export default function TransacoesPage() {
   const router = useRouter();
@@ -30,9 +28,14 @@ export default function TransacoesPage() {
   const [groups, setGroups] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [canCreateTransaction, setCanCreateTransaction] = useState(false);
+  const [canEditTransaction, setCanEditTransaction] = useState(false);
   const [filterType, setFilterType] = useState<'all' | 'ENTRADA' | 'SAIDA'>('all');
   const [filterGroup, setFilterGroup] = useState<string>('all');
   const [filterPayment, setFilterPayment] = useState<'all' | 'PIX' | 'DINHEIRO' | 'CARTAO' | 'TRANSFERENCIA'>('all');
+  
+  // Estado para o modal de edição
+  const [selectedTransaction, setSelectedTransaction] = useState<any>(null);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
 
   useEffect(() => {
     loadData();
@@ -44,17 +47,17 @@ export default function TransacoesPage() {
       
       let groupsData = [];
       
-      // Para SUPER_ADMIN e ADMIN, buscar todos os grupos
       if (user?.role === 'SUPER_ADMIN' || user?.role === 'ADMIN') {
         const response = await groupsAPI.getAll();
         groupsData = response.data || [];
-        setCanCreateTransaction(true); // Admin e Super Admin podem criar
+        setCanCreateTransaction(true);
+        setCanEditTransaction(true); // ✅ Admin e Super Admin podem editar
       } else {
-        // Para LÍDER, buscar apenas grupos associados
         const response = await usersAPI.getMyGroups();
         groupsData = response.data.groups || [];
         const hasEditPermission = groupsData.some((g: any) => g.permission === 'EDITOR');
         setCanCreateTransaction(hasEditPermission);
+        setCanEditTransaction(false); // ✅ Líder NÃO pode editar
       }
       
       setGroups(groupsData);
@@ -81,6 +84,42 @@ export default function TransacoesPage() {
     } finally {
       setLoading(false);
     }
+  };
+
+  // Função para editar transação
+  const handleEditTransaction = async (data: any) => {
+    if (!selectedTransaction) return;
+
+     console.log('📝 Editando transação:', {
+    id: selectedTransaction.id,
+    dados: {
+      descricao: data.descricao,
+      valor: data.valor,
+      tipo: data.tipo,
+      paymentType: data.paymentType,
+    }
+  });
+
+    try {
+      const response = await transactionsAPI.update(selectedTransaction.id, {
+        descricao: data.descricao,
+        valor: data.valor,
+        paymentType: data.paymentType,
+        tipo: data.tipo,
+      });
+      
+      console.log('Resposta do back: ', response.data);
+      await loadData();
+      setIsEditModalOpen(false);
+      setSelectedTransaction(null);
+    } catch (error) {
+      console.error('Erro ao editar transação:', error);
+    }
+  };
+
+  const handleOpenEditModal = (transaction: any) => {
+    setSelectedTransaction(transaction);
+    setIsEditModalOpen(true);
   };
 
   const filteredTransactions = transactions.filter(t => {
@@ -218,59 +257,58 @@ export default function TransacoesPage() {
 
       {/* Filters */}
       <Card className="mb-6">
-        {/* Filters */}
-<div className="flex flex-wrap items-center gap-2 mb-6">
-  {/* Tipo */}
-  <div className="flex rounded-lg border border-gray-200 bg-white overflow-hidden text-sm">
-    {(['all', 'ENTRADA', 'SAIDA'] as const).map((type) => (
-      <button
-        key={type}
-        onClick={() => setFilterType(type)}
-        className={`px-3 py-1.5 transition-colors ${
-          filterType === type
-            ? type === 'ENTRADA'
-              ? 'bg-green-100 text-green-800 font-medium'
-              : type === 'SAIDA'
-              ? 'bg-red-100 text-red-800 font-medium'
-              : 'bg-gray-100 text-gray-800 font-medium'
-            : 'text-gray-500 hover:bg-gray-50'
-        }`}
-      >
-        {type === 'all' ? 'Todos' : type === 'ENTRADA' ? 'Entradas' : 'Saídas'}
-      </button>
-    ))}
-  </div>
+        <div className="flex flex-wrap items-center gap-2">
+          {/* Tipo */}
+          <div className="flex rounded-lg border border-gray-200 bg-white overflow-hidden text-sm">
+            {(['all', 'ENTRADA', 'SAIDA'] as const).map((type) => (
+              <button
+                key={type}
+                onClick={() => setFilterType(type)}
+                className={`px-3 py-1.5 transition-colors ${
+                  filterType === type
+                    ? type === 'ENTRADA'
+                      ? 'bg-green-100 text-green-800 font-medium'
+                      : type === 'SAIDA'
+                      ? 'bg-red-100 text-red-800 font-medium'
+                      : 'bg-gray-100 text-gray-800 font-medium'
+                    : 'text-gray-500 hover:bg-gray-50'
+                }`}
+              >
+                {type === 'all' ? 'Todos' : type === 'ENTRADA' ? 'Entradas' : 'Saídas'}
+              </button>
+            ))}
+          </div>
 
-  {/* Pagamento */}
-  <select
-    value={filterPayment}
-    onChange={(e) => setFilterPayment(e.target.value as any)}
-    className="text-sm px-2 py-1.5 border border-gray-200 rounded-lg bg-white text-gray-700 focus:outline-none focus:ring-2 focus:ring-primary"
-  >
-    <option value="all">Pagamento</option>
-    <option value="PIX">PIX</option>
-    <option value="DINHEIRO">Dinheiro</option>
-    <option value="CARTAO">Cartão</option>
-    <option value="TRANSFERENCIA">Transferência</option>
-  </select>
+          {/* Pagamento */}
+          <select
+            value={filterPayment}
+            onChange={(e) => setFilterPayment(e.target.value as any)}
+            className="text-sm px-2 py-1.5 border border-gray-200 rounded-lg bg-white text-gray-700 focus:outline-none focus:ring-2 focus:ring-primary"
+          >
+            <option value="all">Pagamento</option>
+            <option value="PIX">PIX</option>
+            <option value="DINHEIRO">Dinheiro</option>
+            <option value="CARTAO">Cartão</option>
+            <option value="TRANSFERENCIA">Transferência</option>
+          </select>
 
-  {/* Grupo */}
-  <select
-    value={filterGroup}
-    onChange={(e) => setFilterGroup(e.target.value)}
-    className="text-sm px-2 py-1.5 border border-gray-200 rounded-lg bg-white text-gray-700 focus:outline-none focus:ring-2 focus:ring-primary"
-  >
-    <option value="all">Todos os grupos</option>
-    {groups.map((g: any) => (
-      <option key={g.id} value={g.id}>{g.nome}</option>
-    ))}
-  </select>
+          {/* Grupo */}
+          <select
+            value={filterGroup}
+            onChange={(e) => setFilterGroup(e.target.value)}
+            className="text-sm px-2 py-1.5 border border-gray-200 rounded-lg bg-white text-gray-700 focus:outline-none focus:ring-2 focus:ring-primary"
+          >
+            <option value="all">Todos os grupos</option>
+            {groups.map((g: any) => (
+              <option key={g.id} value={g.id}>{g.nome}</option>
+            ))}
+          </select>
 
-  {/* Contador */}
-  <span className="ml-auto text-sm text-gray-500">
-    {filteredTransactions.length} {filteredTransactions.length === 1 ? 'transação' : 'transações'}
-  </span>
-</div>
+          {/* Contador */}
+          <span className="ml-auto text-sm text-gray-500">
+            {filteredTransactions.length} {filteredTransactions.length === 1 ? 'transação' : 'transações'}
+          </span>
+        </div>
       </Card>
 
       <ResponsiveTable
@@ -326,6 +364,8 @@ export default function TransacoesPage() {
           },
         ]}
         data={filteredTransactions}
+        onEdit={handleOpenEditModal}
+        canEdit={canEditTransaction}
       />
       
       {/* Botão Mobile Floating Action Button */}
@@ -336,6 +376,30 @@ export default function TransacoesPage() {
         >
           <Plus className="w-6 h-6" />
         </button>
+      )}
+
+      {/* Modal de Edição */}
+      {selectedTransaction && (
+        <EditTransactionModal
+          isOpen={isEditModalOpen}
+          onClose={() => {
+            setIsEditModalOpen(false);
+            setSelectedTransaction(null);
+          }}
+          transaction={{
+            id: selectedTransaction.id,
+            nome: selectedTransaction.descricao,
+            descricao: selectedTransaction.descricao,
+            tipo: selectedTransaction.type,
+            paymentType: selectedTransaction.paymentType || 'PIX',
+            valor: selectedTransaction.valor,
+            data: selectedTransaction.data || selectedTransaction.createdAt,
+            createdBy: selectedTransaction.user?.nome || 'Sistema',
+            categoria: 'Outro',
+            groupName: getGroupName(selectedTransaction.groupId),
+          }}
+          onSave={handleEditTransaction}
+        />
       )}
     </div>
   );

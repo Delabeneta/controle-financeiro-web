@@ -4,7 +4,7 @@
 'use client';
 
 import { useState } from 'react';
-import { X } from 'lucide-react';
+import { Edit2, X } from 'lucide-react';
 
 interface Column {
   key: string;
@@ -16,9 +16,11 @@ interface ResponsiveTableProps {
   columns: Column[];
   data: any[];
   onRowClick?: (item: any) => void;
+  onEdit?: (item: any) => void;
+  canEdit?: boolean;
 }
 
-export function ResponsiveTable({ columns, data, onRowClick }: ResponsiveTableProps) {
+export function ResponsiveTable({ columns, data, onRowClick, onEdit, canEdit}: ResponsiveTableProps) {
   const [selectedItem, setSelectedItem] = useState<any | null>(null);
 
   if (!data || data.length === 0) {
@@ -28,6 +30,21 @@ export function ResponsiveTable({ columns, data, onRowClick }: ResponsiveTablePr
       </div>
     );
   }
+
+
+  const displayColumns = canEdit 
+    ? [...columns, { key: 'acoes', header: 'Ações', render: (value: any, item: any) => (
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            onEdit?.(item);
+          }}
+          className="p-1 hover:bg-gray-100 rounded-lg transition-colors"
+        >
+          <Edit2 className="w-4 h-4 text-gray-400 hover:text-primary" />
+        </button>
+      ) }]
+    : columns;
 
   const formatDate = (dateString: string) => {
     if (!dateString) return '';
@@ -61,7 +78,7 @@ export function ResponsiveTable({ columns, data, onRowClick }: ResponsiveTablePr
           <table className="w-full">
             <thead className="bg-gray-50">
               <tr>
-                {columns.map((col) => (
+                {displayColumns.map((col) => (
                   <th key={col.key} className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     {col.header}
                   </th>
@@ -75,7 +92,7 @@ export function ResponsiveTable({ columns, data, onRowClick }: ResponsiveTablePr
                   onClick={() => handleCardClick(item)}
                   className={`${onRowClick ? 'cursor-pointer hover:bg-gray-50' : ''} transition-colors`}
                 >
-                  {columns.map((col) => (
+                  {displayColumns.map((col) => (
                     <td key={col.key} className="px-6 py-4 whitespace-nowrap">
                       {col.render ? col.render(item[col.key], item) : item[col.key]}
                     </td>
@@ -120,6 +137,17 @@ export function ResponsiveTable({ columns, data, onRowClick }: ResponsiveTablePr
                   <span className={`text-sm font-semibold ${isEntrada ? 'text-emerald-600' : 'text-red-500'}`}>
                     {isEntrada ? '+' : '-'} {formatCurrency(item.valor)}
                   </span>
+                  {canEdit && onEdit &&(
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onEdit(item);
+                      }}
+                       className="p-1 hover:bg-gray-100 rounded-lg transition-colors"
+                >
+                  <Edit2 className="w-4 h-4 text-gray-400 hover:text-primary" />
+                </button>
+                                )}
                 </div>
               </div>
             </div>

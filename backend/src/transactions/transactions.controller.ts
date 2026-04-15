@@ -66,6 +66,15 @@ export class TransactionsController {
     );
   }
 
+  @Get(':id')
+  async findOne(@Param('id') id: string, @Req() req: RequestWithUser) {
+    const userId = req.user?.id;
+    if (!userId) {
+      throw new UnauthorizedException('Usuário não autenticado');
+    }
+    return this.transactionsService.findOne(id, req.user);
+  }
+
   // backend/src/transactions/transactions.controller.ts
   @Patch(':id')
   async update(

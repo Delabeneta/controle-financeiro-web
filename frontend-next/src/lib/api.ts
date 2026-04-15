@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 // src/lib/api.ts
 import axios from "axios";
 
@@ -105,6 +106,7 @@ export const transactionsAPI = {
   getByGroup: (groupId: string, type?: string) =>
     api.get(`/transactions/group/${groupId}`, { params: { type } }),
   create: (data: any) => api.post("/transactions", data),
+  update: (id: string, data: any) => api.patch(`/transactions/${id}`, data),
 };
 
 // Admin

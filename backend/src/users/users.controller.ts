@@ -37,7 +37,6 @@ export class UsersController {
 
   @Get()
   findAll(@Req() req: RequestWithUser) {
-    // 👈 ADICIONAR @Req()
     return this.usersService.findAll(req.user); // 👈 PASSAR req.user
   }
 

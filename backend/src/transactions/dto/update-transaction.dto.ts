@@ -7,7 +7,7 @@ import {
   IsDateString,
   Min,
 } from 'class-validator';
-import { PaymentType } from '@prisma/client';
+import { PaymentType, TransactionType } from '@prisma/client';
 import { Type } from 'class-transformer';
 
 export class UpdateTransactionDto {
@@ -24,6 +24,10 @@ export class UpdateTransactionDto {
   @IsOptional()
   @IsEnum(PaymentType)
   paymentType?: PaymentType;
+
+  @IsOptional()
+  @IsEnum(TransactionType)
+  tipo?: TransactionType;
 
   @IsOptional()
   @IsDateString()

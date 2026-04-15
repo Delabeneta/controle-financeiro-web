@@ -15,91 +15,15 @@ import { UpdateTransactionDto } from './dto/update-transaction.dto';
 export class TransactionsService {
   constructor(private prisma: PrismaService) {}
 
+  // ==================== CREATE ====================
   async create(data: CreateTransactionDto, userId: string) {
-    // ← receber userId do token
-    console.log('userId recebido:', userId); // ← Debug
+    console.log('userId recebido:', userId);
 
     if (!data.groupId) {
       throw new BadRequestException('groupId é obrigatório');
     }
 
-    // Se for admin ou super admin, ele pode criar transações sem estar associado a um grupo
-    const user = await this.prisma.user.findUnique({
-      where: { id: userId },
-      select: { id: true, role: true, organizationId: true },
-    });
-
-    if (!user) {
-      throw new NotFoundException('user nao encontrado');
-    }
-
-    const group = await this.prisma.group.findUnique({
-      where: { id: data.groupId },
-      include: { organization: true },
-    });
-    if (!group) throw new NotFoundException('Grupo não encontrado');
-
-    if (user.role != Role.LIDER) {
-      if (group.organizationId !== user.organizationId) {
-        throw new ForbiddenException('Grupo não pertence a sua organização');
-      }
-
-      // Admin/Super Admin têm permissão total
-      return this.prisma.transaction.create({
-        data: {
-          type: data.tipo,
-          valor: data.valor,
-          descricao: data.descricao,
-          paymentType: data.paymentType,
-          data: new Date(data.data),
-          groupId: data.groupId,
-          createdBy: userId,
-        },
-        include: {
-          group: { select: { id: true, nome: true } },
-          user: {
-            select: { id: true, nome: true },
-          },
-        },
-      });
-    }
-
-    // Verificar se usuário, lider, pertence ao grupo
-    const userGroup = await this.prisma.userGroup.findUnique({
-      where: {
-        userId_groupId: {
-          userId: userId,
-          groupId: data.groupId,
-        },
-      },
-    });
-
-    if (!userGroup) {
-      throw new ForbiddenException('Usuário não pertence a este grupo');
-    }
-
-    if (userGroup.permission === 'READ_ONLY') {
-      throw new ForbiddenException('Usuário com permissão somente leitura');
-    }
-
-    return this.prisma.transaction.create({
-      data: {
-        type: data.tipo,
-        valor: data.valor,
-        descricao: data.descricao,
-        data: new Date(data.data),
-        groupId: data.groupId,
-        createdBy: userId, // ← usar 'createdBy' não 'createdById'
-        paymentType: data.paymentType,
-      },
-      include: {
-        group: { select: { id: true, nome: true } },
-        user: { select: { id: true, nome: true } },
-      },
-    });
-  }
-
-  async update(id: string, data: UpdateTransactionDto, userId: string) {
+    // Buscar usuário com suas permissões
     const user = await this.prisma.user.findUnique({
       where: { id: userId },
       select: { id: true, role: true, organizationId: true },
@@ -109,78 +33,237 @@ export class TransactionsService {
       throw new NotFoundException('Usuário não encontrado');
     }
 
+    // Buscar grupo
+    const group = await this.prisma.group.findUnique({
+      where: { id: data.groupId },
+      include: { organization: true },
+    });
+
+    if (!group) {
+      throw new NotFoundException('Grupo não encontrado');
+    }
+
+    // 🔹 SUPER_ADMIN: pode criar em qualquer grupo (qualquer organização)
+    if (user.role === Role.SUPER_ADMIN) {
+      return this.createTransaction(data, userId);
+    }
+
+    // 🔹 ADMIN: só pode criar em grupos da sua organização
+    if (user.role === Role.ADMIN) {
+      if (group.organizationId !== user.organizationId) {
+        throw new ForbiddenException(
+          'Você só pode criar transações em grupos da sua organização',
+        );
+      }
+      return this.createTransaction(data, userId);
+    }
+
+    // 🔹 LIDER: só pode criar se for EDITOR do grupo
+    if (user.role === Role.LIDER) {
+      const userGroup = await this.prisma.userGroup.findUnique({
+        where: {
+          userId_groupId: {
+            userId: userId,
+            groupId: data.groupId,
+          },
+        },
+      });
+
+      if (!userGroup) {
+        throw new ForbiddenException('Você não pertence a este grupo');
+      }
+
+      if (userGroup.permission !== 'EDITOR') {
+        throw new ForbiddenException(
+          'Você não tem permissão para criar transações neste grupo (apenas leitura)',
+        );
+      }
+
+      return this.createTransaction(data, userId);
+    }
+
+    throw new ForbiddenException('Sem permissão para criar transação');
+  }
+
+  // Método auxiliar para criar transação
+  private async createTransaction(data: CreateTransactionDto, userId: string) {
+    return this.prisma.transaction.create({
+      data: {
+        type: data.tipo,
+        valor: data.valor,
+        descricao: data.descricao,
+        paymentType: data.paymentType,
+        data: new Date(data.data),
+        groupId: data.groupId,
+        createdBy: userId,
+      },
+      include: {
+        group: { select: { id: true, nome: true } },
+        user: { select: { id: true, nome: true } },
+      },
+    });
+  }
+
+  // ==================== UPDATE ====================
+  async update(id: string, data: UpdateTransactionDto, userId: string) {
+    // Buscar usuário
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: { id: true, role: true, organizationId: true },
+    });
+
+    if (!user) {
+      throw new NotFoundException('Usuário não encontrado');
+    }
+
+    // Buscar transação com grupo
     const transaction = await this.prisma.transaction.findUnique({
       where: { id },
-      include: { group: { include: { organization: true } } },
+      include: {
+        group: {
+          include: { organization: true },
+        },
+      },
     });
 
     if (!transaction) {
       throw new NotFoundException('Transação não encontrada');
     }
 
-    // SUPER_ADMIN pode editar qualquer transação
+    // 🔹 SUPER_ADMIN: pode editar qualquer transação (qualquer organização)
     if (user.role === Role.SUPER_ADMIN) {
-      return this.prisma.transaction.update({
-        where: { id },
-        data: {
-          descricao: data.descricao,
-          valor: data.valor,
-          paymentType: data.paymentType,
-          data: data.data ? new Date(data.data) : undefined,
-        },
-      });
+      return this.updateTransaction(id, data);
     }
 
-    // ADMIN pode editar transações da sua organização
+    // 🔹 ADMIN: só pode editar transações de grupos da sua organização
     if (user.role === Role.ADMIN) {
       if (transaction.group.organizationId !== user.organizationId) {
-        throw new ForbiddenException('Você não pode editar esta transação');
+        throw new ForbiddenException(
+          'Você só pode editar transações da sua organização',
+        );
       }
-      return this.prisma.transaction.update({
-        where: { id },
-        data: {
-          descricao: data.descricao,
-          valor: data.valor,
-          paymentType: data.paymentType,
-          data: data.data ? new Date(data.data) : undefined,
-        },
-      });
+      return this.updateTransaction(id, data);
     }
 
-    // LÍDER pode editar apenas se for EDITOR do grupo
+    // 🔹 LIDER: só pode editar se for EDITOR do grupo
     if (user.role === Role.LIDER) {
       const userGroup = await this.prisma.userGroup.findUnique({
         where: {
-          userId_groupId: { userId, groupId: transaction.groupId },
+          userId_groupId: {
+            userId: userId,
+            groupId: transaction.groupId,
+          },
         },
       });
 
-      if (!userGroup || userGroup.permission !== 'EDITOR') {
+      if (!userGroup) {
+        throw new ForbiddenException('Você não pertence a este grupo');
+      }
+
+      if (userGroup.permission !== 'EDITOR') {
         throw new ForbiddenException(
-          'Você não tem permissão para editar esta transação',
+          'Você não tem permissão para editar transações neste grupo (apenas leitura)',
         );
       }
 
-      return this.prisma.transaction.update({
-        where: { id },
-        data: {
-          descricao: data.descricao,
-          valor: data.valor,
-          paymentType: data.paymentType,
-          data: data.data ? new Date(data.data) : undefined,
-        },
-      });
+      return this.updateTransaction(id, data);
     }
 
     throw new ForbiddenException('Sem permissão para editar esta transação');
   }
 
+  // Método auxiliar para atualizar transação
+  private async updateTransaction(id: string, data: UpdateTransactionDto) {
+    return this.prisma.transaction.update({
+      where: { id },
+      data: {
+        descricao: data.descricao,
+        valor: data.valor,
+        paymentType: data.paymentType,
+        data: data.data ? new Date(data.data) : undefined,
+      },
+      include: {
+        group: { select: { id: true, nome: true } },
+        user: { select: { id: true, nome: true } },
+      },
+    });
+  }
+
+  // ==================== DELETE ====================
+  async delete(id: string, userId: string) {
+    // Buscar usuário
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: { id: true, role: true, organizationId: true },
+    });
+
+    if (!user) {
+      throw new NotFoundException('Usuário não encontrado');
+    }
+
+    // Buscar transação com grupo
+    const transaction = await this.prisma.transaction.findUnique({
+      where: { id },
+      include: {
+        group: {
+          include: { organization: true },
+        },
+      },
+    });
+
+    if (!transaction) {
+      throw new NotFoundException('Transação não encontrada');
+    }
+
+    // 🔹 SUPER_ADMIN: pode deletar qualquer transação
+    if (user.role === Role.SUPER_ADMIN) {
+      return this.prisma.transaction.delete({ where: { id } });
+    }
+
+    // 🔹 ADMIN: só pode deletar transações da sua organização
+    if (user.role === Role.ADMIN) {
+      if (transaction.group.organizationId !== user.organizationId) {
+        throw new ForbiddenException(
+          'Você só pode deletar transações da sua organização',
+        );
+      }
+      return this.prisma.transaction.delete({ where: { id } });
+    }
+
+    // 🔹 LIDER: só pode deletar se for EDITOR do grupo
+    if (user.role === Role.LIDER) {
+      const userGroup = await this.prisma.userGroup.findUnique({
+        where: {
+          userId_groupId: {
+            userId: userId,
+            groupId: transaction.groupId,
+          },
+        },
+      });
+
+      if (!userGroup) {
+        throw new ForbiddenException('Você não pertence a este grupo');
+      }
+
+      if (userGroup.permission !== 'EDITOR') {
+        throw new ForbiddenException(
+          'Você não tem permissão para deletar transações neste grupo (apenas leitura)',
+        );
+      }
+
+      return this.prisma.transaction.delete({ where: { id } });
+    }
+
+    throw new ForbiddenException('Sem permissão para deletar esta transação');
+  }
+
+  // ==================== FIND ALL ====================
   async findAll(user: {
     id: string;
     role: Role;
     organizationId: string | null;
   }) {
-    // Super Admin — todas as transações (implementar se necessário)
+    // 🔹 SUPER_ADMIN: todas as transações
     if (user.role === Role.SUPER_ADMIN) {
       return this.prisma.transaction.findMany({
         include: {
@@ -190,7 +273,8 @@ export class TransactionsService {
         orderBy: { data: 'desc' },
       });
     }
-    // Admin — todas as transações dos grupos da sua organização
+
+    // 🔹 ADMIN: todas as transações dos grupos da sua organização
     if (user.role === Role.ADMIN) {
       return this.prisma.transaction.findMany({
         where: {
@@ -204,11 +288,11 @@ export class TransactionsService {
       });
     }
 
-    // Líder — só transações dos grupos que ele participa
+    // 🔹 LIDER: só transações dos grupos que ele participa
     return this.prisma.transaction.findMany({
       where: {
         group: {
-          users: { some: { userId: user.id } }, // ← é 'users' não 'userGroups'
+          users: { some: { userId: user.id } },
         },
       },
       include: {
@@ -219,33 +303,31 @@ export class TransactionsService {
     });
   }
 
-  // transactions.service.ts
+  // ==================== FIND WITH FILTERS ====================
   async findAllWithFilters(filters: any, user: User) {
     const where: any = {};
 
-    // Filtro por tipo
     if (filters.type) {
       where.type = filters.type;
     }
 
-    // Filtro por tipo de pagamento
     if (filters.paymentType) {
       where.paymentType = filters.paymentType;
     }
 
-    // Filtro por grupo (com verificação de permissão)
     if (filters.groupId) {
       where.groupId = filters.groupId;
     }
 
     // Permissões do usuário
-    if (user.role === 'ADMIN') {
+    if (user.role === Role.ADMIN) {
       where.group = { organizationId: user.organizationId };
-    } else if (user.role === 'LIDER') {
+    } else if (user.role === Role.LIDER) {
       where.group = {
         users: { some: { userId: user.id } },
       };
     }
+    // SUPER_ADMIN: sem filtro de organização
 
     const transactions = await this.prisma.transaction.findMany({
       where,
@@ -295,19 +377,48 @@ export class TransactionsService {
     };
   }
 
+  // ==================== FIND BY GROUP ====================
   async findByGroup(groupId: string, type?: 'ENTRADA' | 'SAIDA', user?: User) {
+    const group = await this.prisma.group.findUnique({
+      where: { id: groupId },
+    });
+
+    if (!group) {
+      throw new NotFoundException('Grupo não encontrado');
+    }
+
+    // Se for LÍDER, verificar se pertence ao grupo
+    if (user?.role === Role.LIDER) {
+      const userGroup = await this.prisma.userGroup.findUnique({
+        where: {
+          userId_groupId: {
+            userId: user.id,
+            groupId: groupId,
+          },
+        },
+      });
+
+      if (!userGroup) {
+        throw new ForbiddenException('Você não pertence a este grupo');
+      }
+    }
+
+    // Se for ADMIN, verificar se o grupo é da sua organização
+    if (user?.role === Role.ADMIN) {
+      if (group.organizationId !== user.organizationId) {
+        throw new ForbiddenException(
+          'Este grupo não pertence à sua organização',
+        );
+      }
+    }
+
     const where: any = { groupId };
     if (type) {
       where.type = type;
     }
 
-    const group = await this.prisma.group.findUnique({
-      where: { id: groupId },
-    });
-    if (!group) throw new NotFoundException('Grupo não encontrado');
-
     return this.prisma.transaction.findMany({
-      where: { groupId },
+      where,
       include: {
         user: {
           select: { id: true, nome: true },

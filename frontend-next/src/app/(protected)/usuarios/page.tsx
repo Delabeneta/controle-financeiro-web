@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 // src/app/(protected)/usuarios/page.tsx
 'use client';
 
@@ -17,6 +18,12 @@ import {
   X,
   Link2,
 } from 'lucide-react';
+
+interface Group {
+  id: string;
+  nome: string;
+  permission: string;
+}
 
 interface User {
   id: string;
@@ -352,7 +359,7 @@ export default function UsuariosPage() {
             Nenhum usuário encontrado
           </h3>
           <p className="text-gray-600">
-            Clique em "Adicionar Usuário" para começar.
+            Clique em Adicionar Usuário para começar.
           </p>
         </Card>
       ) : (
@@ -375,7 +382,7 @@ export default function UsuariosPage() {
 
                       {user.groups && user.groups.length > 0 && (
                         <div className="flex flex-wrap gap-1">
-                          {user.groups.map(group => (
+                          {user.groups.map((group: Group) => (
                             <span 
                               key={group.id}
                               className="px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded-full"

@@ -1,10 +1,11 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 // src/app/transacoes/nova/page.tsx
 'use client';
 
 import { useState, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useAuth } from '@/src/context/AuthContext';
-import { transactionsAPI, usersAPI } from '@/src/lib/api';
+import { groupsAPI, transactionsAPI, usersAPI } from '@/src/lib/api';
 import { Card } from '@/components/card';
 import { Button } from '@/src/components/ui/button';
 import { Breadcrumb } from '@/components/BreadCrumb';
@@ -35,25 +36,46 @@ export default function NovaTransacaoPage() {
     loadGroups();
   }, [user]);
 
-  const loadGroups = async () => {
-    try {
-      setLoading(true);
+
+const loadGroups = async () => {
+  try {
+    setLoading(true);
+    
+    let editableGroups = [];
+    
+    if (user?.role === 'SUPER_ADMIN') {
+      const response = await groupsAPI.getAll(); // Busca TODOS os grupos
+      editableGroups = response.data.map((group: any) => ({
+        id: group.id,
+        nome: group.nome,
+        permission: 'EDITOR',
+      }));
+    } 
+    // 🔹 ADMIN: pode criar transações em todos os grupos da SUA organização
+    else if (user?.role === 'ADMIN') {
+      const response = await groupsAPI.getAll(); // GET /groups (já filtra por organização no backend)
+      editableGroups = response.data.map((group: any) => ({
+        id: group.id,
+        nome: group.nome,
+        permission: 'EDITOR',
+      }));
+    } 
+    else if (user?.role === 'LIDER') {
       const response = await usersAPI.getMyGroups();
       const userGroups = response.data.groups || [];
-      
-      const editableGroups = userGroups.filter(
-        (g: any) => user?.role === 'ADMIN' || user?.role === 'SUPER_ADMIN' || g.permission === 'EDITOR'
-      );
-      
-      setGroups(editableGroups);
-    } catch (err) {
-      console.error('Erro ao carregar grupos:', err);
-      setError('Erro ao carregar grupos');
-    } finally {
-      setLoading(false);
+      editableGroups = userGroups.filter((g: any) => g.permission === 'EDITOR');
     }
-  };
-
+    
+    console.log('Grupos editáveis:', editableGroups);
+    setGroups(editableGroups);
+    
+  } catch (err) {
+    console.error('Erro ao carregar grupos:', err);
+    setError('Erro ao carregar grupos');
+  } finally {
+    setLoading(false);
+  }
+};
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     

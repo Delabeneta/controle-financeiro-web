@@ -4,15 +4,15 @@
 import { useAuth } from '@/src/context/AuthContext';
 import { useRouter } from 'next/navigation';
 import { useEffect } from 'react';
-import { Sidebar } from '@/components/sidebar'; 
-import { FloatingActionButton } from '@/components/FloatingActionButton';
+import { Sidebar } from '@/components/sidebar';
+import { FloatingActionButton } from '@/components/FloatingActionButton'; // ← REMOVER esta importação
 
 export default function ProtectedLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  const { isAuthenticated, user } = useAuth();
+  const { isAuthenticated } = useAuth();
   const router = useRouter();
 
   useEffect(() => {
@@ -30,7 +30,6 @@ export default function ProtectedLayout({
         <div className="px-4 py-4 md:px-6 md:py-6 lg:px-8 lg:py-8">
           {children}
         </div>
-        <FloatingActionButton />
       </main>
     </div>
   );

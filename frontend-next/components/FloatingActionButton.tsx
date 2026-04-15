@@ -17,8 +17,8 @@ export function FloatingActionButton() {
   return (
     <button
       onClick={() => router.push('/transacoes/nova')}
-      className="fixed bottom-6 right-6 w-14 h-14 bg-success text-white rounded-full shadow-lg hover:bg-green-700 transition-all hover:scale-110 flex items-center justify-center z-50"
-    >
+     className="fixed bottom-6 right-6 w-14 h-14 bg-green-500 text-white rounded-full shadow-lg hover:bg-green-700 transition-all hover:scale-110 flex items-center justify-center z-50"
+>
       <Plus className="w-6 h-6" />
     </button>
   );

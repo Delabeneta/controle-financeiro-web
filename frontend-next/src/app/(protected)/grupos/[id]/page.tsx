@@ -20,10 +20,8 @@ import {
   CreditCard,
   Banknote,
   Calendar,
-  X,
 } from 'lucide-react';
 import { ResponsiveTable } from '@/components/ResponsiveTable';
-import { Edit2 } from 'lucide-react';
 
 type TabType = 'transacoes' | 'membros';
 
@@ -43,28 +41,6 @@ export default function GrupoDetailPage() {
   const [members, setMembers] = useState<any[]>([]);
   const [membersLoading, setMembersLoading] = useState(false);
 
- // Adicionar estado para o modal
-const [isEditSaldoOpen, setIsEditSaldoOpen] = useState(false);
-const [saldoInicialEdit, setSaldoInicialEdit] = useState(0);
-const [savingS, setSavingS] = useState(false);
-
-// Função de salvar
-const handleSaveSaldoInicial = async () => {
-  setSavingS(true);
-  try {
-    await groupsAPI.updateSaldoInicial(id, saldoInicialEdit);
-    await loadData();
-    setIsEditSaldoOpen(false);
-  } catch (err) {
-    console.error('Erro ao salvar saldo inicial:', err);
-  } finally {
-    setSavingS(false);
-  }
-};
-
-
-
-
   useEffect(() => {
     if (id) {
       loadData();
@@ -77,15 +53,12 @@ const handleSaveSaldoInicial = async () => {
     setError(null);
     
     try {
-      // Buscar grupo
       const groupRes = await groupsAPI.getOne(id);
       setGroup(groupRes.data);
       
-      // Buscar saldos
       const saldosRes = await groupsAPI.getSaldos(id);
       setSaldos(saldosRes.data);
       
-      // Buscar transações
       const transactionsRes = await transactionsAPI.getByGroup(id);
       setTransactions(transactionsRes.data || []);
       
@@ -94,6 +67,17 @@ const handleSaveSaldoInicial = async () => {
       setError(err.response?.data?.message || 'Erro ao carregar dados');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const loadMembers = async () => {
+    setMembersLoading(true);
+    try {
+      setMembers([]);
+    } catch (err) {
+      console.error('Erro ao carregar membros:', err);
+    } finally {
+      setMembersLoading(false);
     }
   };
 
@@ -119,21 +103,7 @@ const handleSaveSaldoInicial = async () => {
     });
   };
 
-  // Verificar permissões
-  const canEdit = user?.role === 'ADMIN' || user?.role === 'SUPER_ADMIN';
-
-  // Botão flutuante específico para o grupo
-  const GroupFloatingButton = () => {
-    if (!canEdit) return null;
-    return (
-      <button
-        onClick={() => router.push(`/transacoes/nova?groupId=${id}`)}
-        className="fixed bottom-6 right-6 w-14 h-14 bg-success text-white rounded-full shadow-lg hover:bg-green-700 transition-all hover:scale-110 flex items-center justify-center z-50"
-      >
-        <Plus className="w-6 h-6" />
-      </button>
-    );
-  };
+  const canEdit = user?.role === 'ADMIN' || user?.role === 'SUPER_ADMIN' || user?.role === 'LIDER';
 
   if (loading) {
     return (
@@ -185,77 +155,63 @@ const handleSaveSaldoInicial = async () => {
               </p>
             </div>
           </div>
+          
+          {/* Botão Registrar Transação - Desktop */}
+          {canEdit && (
+            <Button
+              onClick={() => router.push(`/transacoes/nova?groupId=${id}`)}
+              className="bg-green-500 hover:bg-green-700 text-white"
+            >
+              <Plus className="w-4 h-4 mr-2" />
+              Registrar Transação
+            </Button>
+          )}
         </div>
       </div>
 
       {/* Balance Cards */}
-    {saldos && (
-  <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-    <Card className="bg-gradient-to-br from-primary to-primary-dark text-white">
-      <p className="text-white/80 mb-2">Saldo Total</p>
-      <p className="text-3xl font-bold">{formatCurrency(saldos.saldoTotal)}</p>
-    </Card>
-    
-    <Card>
-      <div className="flex items-center justify-between">
-        <div>
-          <p className="text-sm text-gray-600 mb-1">Saldo em Banco</p>
-          <p className={`text-xl font-bold ${saldos.saldoBanco >= 0 ? 'text-success' : 'text-danger'}`}>
-            {formatCurrency(saldos.saldoBanco)}
-          </p>
-        </div>
-        <div className="p-3 bg-blue-50 rounded-lg">
-          <CreditCard className="w-5 h-5 text-primary" />
-        </div>
-      </div>
-    </Card>
+      {saldos && (
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+          <Card className="bg-gradient-to-br from-primary to-primary-dark text-white">
+            <p className="text-white/80 mb-2">Saldo Total</p>
+            <p className="text-3xl font-bold">{formatCurrency(saldos.saldoTotal)}</p>
+          </Card>
+          
+          <Card>
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-gray-600 mb-1">Saldo em Banco</p>
+                <p className={`text-xl font-bold ${saldos.saldoBanco >= 0 ? 'text-success' : 'text-danger'}`}>
+                  {formatCurrency(saldos.saldoBanco)}
+                </p>
+              </div>
+              <div className="p-3 bg-blue-50 rounded-lg">
+                <CreditCard className="w-5 h-5 text-primary" />
+              </div>
+            </div>
+          </Card>
 
-    <Card>
-      <div className="flex items-center justify-between">
-        <div>
-          <p className="text-sm text-gray-600 mb-1">Saldo em Caixa</p>
-          <p className={`text-xl font-bold ${saldos.saldoCaixa >= 0 ? 'text-success' : 'text-danger'}`}>
-            {formatCurrency(saldos.saldoCaixa)}
-          </p>
+          <Card>
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-gray-600 mb-1">Saldo em Caixa</p>
+                <p className={`text-xl font-bold ${saldos.saldoCaixa >= 0 ? 'text-success' : 'text-danger'}`}>
+                  {formatCurrency(saldos.saldoCaixa)}
+                </p>
+              </div>
+              <div className="p-3 bg-green-50 rounded-lg">
+                <Banknote className="w-5 h-5 text-success" />
+              </div>
+            </div>
+          </Card>
         </div>
-        <div className="p-3 bg-green-50 rounded-lg">
-          <Banknote className="w-5 h-5 text-success" />
-        </div>
-      </div>
-    </Card>
-
-    {/* Saldo Inicial — visível para todos, editável só para admin */}
-    <Card>
-      <div className="flex items-center justify-between">
-        <div>
-          <p className="text-sm text-gray-600 mb-1">Saldo Inicial</p>
-          <p className="text-xl font-bold text-gray-700">
-            {formatCurrency(saldos.saldoInicial ?? group.saldoInicial ?? 0)}
-          </p>
-        </div>
-        {canEdit && (
-          <button
-            onClick={() => {
-              setSaldoInicialEdit(saldos.saldoInicial ?? group.saldoInicial ?? 0);
-              setIsEditSaldoOpen(true);
-            }}
-            className="p-3 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
-          >
-            <Edit2 className="w-5 h-5 text-gray-500" />
-          </button>
-        )}
-      </div>
-    </Card>
-  </div>
-)}
+      )}
 
       {/* Tabs */}
       <div className="border-b border-gray-200 mb-6">
         <div className="flex gap-6">
           <button
-            onClick={() => {
-              setActiveTab('transacoes');
-            }}
+            onClick={() => setActiveTab('transacoes')}
             className={`pb-3 px-1 font-medium transition-colors relative ${
               activeTab === 'transacoes'
                 ? 'text-primary'
@@ -270,7 +226,7 @@ const handleSaveSaldoInicial = async () => {
           <button
             onClick={() => {
               setActiveTab('membros');
-             
+              loadMembers();
             }}
             className={`pb-3 px-1 font-medium transition-colors relative ${
               activeTab === 'membros'
@@ -396,65 +352,6 @@ const handleSaveSaldoInicial = async () => {
         </Card>
       )}
 
-        {/* Modal editar saldo inicial */}
-{isEditSaldoOpen && (
-  <div
-    className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50"
-    onClick={() => setIsEditSaldoOpen(false)}
-  >
-    <div
-      className="bg-white rounded-xl shadow-xl w-full max-w-sm"
-      onClick={(e) => e.stopPropagation()}
-    >
-      <div className="flex items-center justify-between p-4 border-b">
-        <h2 className="text-base font-semibold text-gray-900">Editar Saldo Inicial</h2>
-        <button
-          onClick={() => setIsEditSaldoOpen(false)}
-          className="p-1 hover:bg-gray-100 rounded-lg"
-        >
-          <X className="w-5 h-5" />
-        </button>
-      </div>
-
-      <div className="p-4">
-        <label className="block text-sm font-medium text-gray-700 mb-1">
-          Valor (R$)
-        </label>
-        <input
-          type="number"
-          step="0.01"
-          value={saldoInicialEdit}
-          onChange={(e) => setSaldoInicialEdit(parseFloat(e.target.value) || 0)}
-          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
-          autoFocus
-        />
-        <p className="text-xs text-gray-500 mt-2">
-          Esse valor representa o saldo de abertura do grupo.
-        </p>
-      </div>
-
-      <div className="flex gap-3 p-4 border-t">
-        <Button
-          variant="outline"
-          onClick={() => setIsEditSaldoOpen(false)}
-          className="flex-1"
-        >
-          Cancelar
-        </Button>
-        <Button
-          onClick={handleSaveSaldoInicial}
-          className="flex-1 bg-primary hover:bg-primary-dark"
-          disabled={savingS}
-        >
-          {savingS ? 'Salvando...' : 'Salvar'}
-        </Button>
-      </div>
-    </div>
-  </div>
-)}
-
-      {/* Botão flutuante específico para o grupo */}
-      <GroupFloatingButton />
     </div>
   );
 }

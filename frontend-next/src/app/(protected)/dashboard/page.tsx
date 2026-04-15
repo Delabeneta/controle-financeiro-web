@@ -4,7 +4,6 @@ import { useRouter } from 'next/navigation';
 import { useAuth } from '@/src/context/AuthContext';
 import { dashboardApi } from '@/src/lib/api';
 import { StatCard } from '@/components/card';
-import { Button } from '@/src/components/ui/button';
 import { Breadcrumb } from '@/components/BreadCrumb';
 import { Plus, Wallet, Users, UsersRound, Loader2 } from 'lucide-react';
 import {
@@ -85,13 +84,7 @@ export default function DashboardPage() {
             <p className="text-gray-600 mt-1">Bem-vindo, {user?.nome}</p>
           </div>
 
-          <Button
-            onClick={() => router.push('/transacoes/nova')}
-            className="bg-success hover:bg-green-700"
-          >
-            <Plus className="w-4 h-4 mr-2" />
-            Nova Transação
-          </Button>
+        
         </div>
       </div>
 
@@ -168,13 +161,6 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      {/* FAB */}
-      <button
-        onClick={() => router.push('/transacoes/nova')}
-        className="fixed bottom-6 right-6 w-14 h-14 bg-success text-white rounded-full shadow-lg md:hidden"
-      >
-        <Plus className="w-6 h-6 mx-auto" />
-      </button>
-    </div>
+      </div>
   );
 }

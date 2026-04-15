@@ -8,14 +8,12 @@ import { useAuth } from '@/src/context/AuthContext';
 import { 
   LayoutDashboard, 
   Users, 
-  Receipt, 
   LogOut, 
   ChevronLeft,
   Building2,
   UserCircle,
   Menu,
   X,
-  Settings,
   CreditCard,
 } from 'lucide-react';
 
@@ -103,7 +101,7 @@ export function Sidebar() {
       {/* Mobile Menu Button */}
       <button
         onClick={() => setMobileOpen(!mobileOpen)}
-        className="fixed top-4 left-4 z-50 lg:hidden bg-primary text-white p-2 rounded-lg shadow-lg hover:bg-primary-dark transition-colors"
+        className="fixed top-4 right-4 z-50 lg:hidden bg-primary text-white p-2 rounded-lg shadow-lg hover:bg-primary-dark transition-colors"
         aria-label="Menu"
       >
         {mobileOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}

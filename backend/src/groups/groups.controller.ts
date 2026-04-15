@@ -1,4 +1,4 @@
-// groups.controller.ts - Versão com JWT
+// groups.controller.ts
 import {
   Controller,
   Get,

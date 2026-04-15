@@ -18,7 +18,6 @@ import {
   X,
 } from 'lucide-react';
 
-// ✅ Definir o tipo da organização
 interface Organization {
   id: string;
   nome: string;

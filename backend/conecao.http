@@ -1,6 +1,6 @@
 ### 1. Login do super admin
 # @name adminLogin
-POST http://localhost:3000/auth/login
+POST https://controlefinaceiroback.onrender.com/auth/login
 Content-Type: application/json
 
 {
@@ -24,20 +24,20 @@ Content-Type: application/json
 }
 
 ### 4. Criar usuário comum (CORRIGIDO)
-POST http://localhost:3000/users
+POST https://controlefinaceiroback.onrender.com/users
 Authorization: Bearer {{tokenAdmin}}
 Content-Type: application/json
 
 {
-  "nome": "joao",
-  "email": "rafael122@email.com",
+  "nome": "Núcleo do Setor",
+  "email": "setoragoravai2026@gmail.com",
   "senha": "123456",
-  "organizationId": "09a0d868-762f-41c4-82d4-efddd990179e",
-  "role": "LIDER"
+  "organizationId": "e605cba8-e8f4-4d48-8324-2b38219c86d4",
+  "role": "ADMIN"
 }
 
 ### 5. Listar usuários (CORRIGIDO)
-GET http://localhost:3000/users
+GET https://controlefinaceiroback.onrender.com/users
 Authorization: Bearer {{tokenAdmin}}
 
 ### 6. Criar super admin via endpoint admin

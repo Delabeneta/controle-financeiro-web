@@ -10,6 +10,7 @@ import { UpdateUserDto } from './dto/update-user.dto';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { HashingService } from 'src/auth/hashing/hashing.service';
 import { GroupsService } from 'src/groups/groups.service';
+import { Role, User } from '@prisma/client';
 
 @Injectable()
 export class UsersService {
@@ -74,19 +75,45 @@ export class UsersService {
     return user;
   }
 
-  async findAll() {
-    return this.prisma.user.findMany({
-      select: {
-        id: true,
-        nome: true,
-        email: true,
-        role: true,
-        organizationId: true,
-        createdAt: true,
+  // src/users/users.service.ts
+  async findAll(user: User) {
+    // Define o escopo baseado na role
+    const where =
+      user.role === Role.SUPER_ADMIN
+        ? {}
+        : { organizationId: user.organizationId! };
+
+    const users = await this.prisma.user.findMany({
+      where,
+      include: {
+        groups: {
+          include: {
+            group: {
+              select: {
+                id: true,
+                nome: true,
+              },
+            },
+          },
+        },
       },
     });
-  }
 
+    // Formata a resposta
+    return users.map((u) => ({
+      id: u.id,
+      nome: u.nome,
+      email: u.email,
+      role: u.role,
+      organizationId: u.organizationId,
+      createdAt: u.createdAt,
+      groups: u.groups.map((ug) => ({
+        id: ug.group.id,
+        nome: ug.group.nome,
+        permission: ug.permission,
+      })),
+    }));
+  }
   async findOne(id: string) {
     const user = await this.prisma.user.findUnique({
       where: { id },

@@ -19,7 +19,11 @@ async function bootstrap() {
   console.log('✅ Pipes ok');
 
   app.enableCors({
-    origin: 'https://controlefinanceiro-theta.vercel.app',
+    origin: [
+      'http://localhost:3000',
+      'http://localhost:3001',
+      'https://controlefinanceiro-theta.vercel.app',
+    ],
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
     credentials: true,
     allowedHeaders: ['Content-Type', 'Authorization'],
@@ -27,7 +31,7 @@ async function bootstrap() {
 
   console.log('✅ CORS ok');
 
-  const port = Number(process.env.PORT) || 3000;
+  const port = Number(process.env.PORT) || 10000;
 
   console.log('🔥 Tentando subir servidor...');
 

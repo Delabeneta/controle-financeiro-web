@@ -1,3 +1,4 @@
+// src/users/users.controller.ts
 import {
   Controller,
   Get,
@@ -35,13 +36,14 @@ export class UsersController {
   }
 
   @Get()
-  findAll() {
-    return this.usersService.findAll();
+  findAll(@Req() req: RequestWithUser) {
+    // 👈 ADICIONAR @Req()
+    return this.usersService.findAll(req.user); // 👈 PASSAR req.user
   }
 
   @Get(':id')
   findOne(@Param('id') id: string) {
-    return this.usersService.findOne(id); // era +id, agora string UUID
+    return this.usersService.findOne(id);
   }
 
   @Get('me/groups')

@@ -1,7 +1,7 @@
 // src/lib/api.ts
 import axios from "axios";
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000";
+const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:10000";
 
 console.log("API URL:", API_URL);
 
@@ -52,7 +52,12 @@ export interface User {
   nome: string;
   email: string;
   role: "SUPER_ADMIN" | "ADMIN" | "LIDER";
-  organizationId: string | null;
+  organizationId?: string;
+  groups: {
+    id: string;
+    nome: string;
+    permission: string;
+  }[];
 }
 
 // Auth
@@ -123,4 +128,8 @@ export const userGroupsAPI = {
     api.patch(`/user-groups/${groupId}/${userId}/permission`, { permission }),
   getByGroup: (groupId: string) => api.get(`/user-groups/group/${groupId}`),
   getByUser: (userId: string) => api.get(`/user-groups/user/${userId}`),
+};
+
+export const dashboardApi = {
+  get: () => api.get("/dashboard"),
 };

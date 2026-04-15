@@ -18,6 +18,21 @@ import {
   Link2,
 } from 'lucide-react';
 
+interface User {
+  id: string;
+  nome: string;
+  email: string;
+  role: string;
+  organizationId?: string;
+  groups: {  
+    id: string;
+    nome: string;
+    permission: string;
+  }[];
+}
+
+
+
 // Modal de vincular usuário a grupo
 function LinkUserModal({ 
   isOpen, 
@@ -352,11 +367,26 @@ export default function UsuariosPage() {
                   
                   <div className="flex-1 min-w-0">
                     <div className="flex flex-col sm:flex-row sm:items-center gap-2 mb-2">
-                      <h3 className="text-base md:text-lg font-semibold text-gray-900 truncate">{user.nome}</h3>
+                      <h3 className="text-base md:text-lg font-semibold text-gray-900 truncate">
+                        
+                        {user.nome}
+                        </h3>
                       {getRoleBadge(user.role)}
+
+                      {user.groups && user.groups.length > 0 && (
+                        <div className="flex flex-wrap gap-1">
+                          {user.groups.map(group => (
+                            <span 
+                              key={group.id}
+                              className="px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded-full"
+                            >
+                              {group.nome}
+                            </span>
+                          ))}
+                        </div>
+                      )}
                     </div>
-                    
-                    <div className="flex items-center gap-2 text-sm text-gray-600">
+                              <div className="flex items-center gap-2 text-sm text-gray-600">
                       <Mail className="w-4 h-4 flex-shrink-0" />
                       <span className="truncate">{user.email}</span>
                     </div>

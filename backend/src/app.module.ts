@@ -9,6 +9,7 @@ import { GroupsModule } from './groups/groups.module';
 import { UserGroupsModule } from './user-groups/user-groups.module';
 import { TransactionsModule } from './transactions/transactions.module';
 import { AuthModule } from './auth/auth.module';
+import { DashboardModule } from './dashboard/dashboard.module';
 
 @Module({
   imports: [
@@ -20,6 +21,7 @@ import { AuthModule } from './auth/auth.module';
     UserGroupsModule,
     TransactionsModule,
     AuthModule,
+    DashboardModule,
   ],
   controllers: [AppController],
   providers: [AppService],

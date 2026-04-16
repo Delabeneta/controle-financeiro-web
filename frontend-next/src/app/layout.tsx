@@ -10,7 +10,7 @@ export const metadata: Metadata = {
   title: 'Gestão Financeira',
   description: 'Plataforma de gestão financeira para grupos',
   icons:{
-    icon: 'favicon.png', 
+    icon: 'logo.svg', 
   }
 };
 

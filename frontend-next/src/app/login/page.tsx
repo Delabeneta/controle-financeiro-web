@@ -6,7 +6,7 @@ import { useAuth } from '@/src/context/AuthContext';
 import { Button } from '@/src/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Loader2, Lock, Mail, Building2 } from 'lucide-react';
 
 export default function LoginPage() {

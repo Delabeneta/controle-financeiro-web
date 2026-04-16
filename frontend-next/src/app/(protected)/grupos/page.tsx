@@ -9,10 +9,9 @@ import { usersAPI, groupsAPI, adminAPI } from '@/src/lib/api';
 import { Card } from '@/components/card';
 import { Button } from '@/src/components/ui/button';
 import { Breadcrumb } from '@/components/BreadCrumb';
-import { Plus, Users, Eye, Edit, Loader2, User, X } from 'lucide-react';
+import { Plus, Users, Edit, Loader2, X } from 'lucide-react';
 import { EditGroupModal } from '@/components/EditGroupModal';
 
-// Modal de criar grupo
 function CreateGroupModal({ 
   isOpen, 
   onClose, 

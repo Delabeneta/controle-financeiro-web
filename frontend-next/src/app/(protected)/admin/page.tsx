@@ -57,7 +57,7 @@ function Modal({ isOpen, onClose, title, children }: { isOpen: boolean; onClose:
 
 export default function AdminPage() {
   const { user: currentUser } = useAuth();
-  const [organizations, setOrganizations] = useState<Organization[]>([]); // ✅ Tipo correto
+  const [organizations, setOrganizations] = useState<Organization[]>([]); 
   const [loading, setLoading] = useState(true);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [formData, setFormData] = useState({
@@ -119,7 +119,6 @@ export default function AdminPage() {
     });
   };
 
-  // Apenas Super Admin pode acessar
   if (currentUser?.role !== 'SUPER_ADMIN') {
     return (
       <div className="p-4 md:p-8">

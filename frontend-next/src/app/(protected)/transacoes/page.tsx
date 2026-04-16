@@ -7,19 +7,13 @@ import { useRouter } from 'next/navigation';
 import { useAuth } from '@/src/context/AuthContext';
 import { transactionsAPI, usersAPI, groupsAPI } from '@/src/lib/api';
 import { Card } from '@/components/card';
-import { Button } from '@/src/components/ui/button';
 import { Breadcrumb } from '@/components/BreadCrumb';
-import { 
-  ArrowUpCircle, 
-  ArrowDownCircle,
-  CreditCard,
-  Banknote,
-  Wallet,
-  Loader2,
-  Plus,
-} from 'lucide-react';
+import { ArrowUpCircle, ArrowDownCircle, Loader2 } from 'lucide-react';
 import { ResponsiveTable } from '@/components/ResponsiveTable';
 import { EditTransactionModal } from '@/components/EditTransactionModal';
+import { SaldoCards } from '@/components/Saldocards'; 
+import { TransactionFilters } from '@/components/Transactionfilters';
+import { RegisterTransactionButton } from '@/components/RegisterTransactionButton';
 
 export default function TransacoesPage() {
   const router = useRouter();
@@ -32,8 +26,7 @@ export default function TransacoesPage() {
   const [filterType, setFilterType] = useState<'all' | 'ENTRADA' | 'SAIDA'>('all');
   const [filterGroup, setFilterGroup] = useState<string>('all');
   const [filterPayment, setFilterPayment] = useState<'all' | 'PIX' | 'DINHEIRO' | 'CARTAO' | 'TRANSFERENCIA'>('all');
-  
-  // Estado para o modal de edição
+
   const [selectedTransaction, setSelectedTransaction] = useState<any>(null);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
 
@@ -44,41 +37,39 @@ export default function TransacoesPage() {
   const loadData = async () => {
     try {
       setLoading(true);
-      
+
       let groupsData = [];
-      
+
       if (user?.role === 'SUPER_ADMIN' || user?.role === 'ADMIN') {
         const response = await groupsAPI.getAll();
         groupsData = response.data || [];
         setCanCreateTransaction(true);
-        setCanEditTransaction(true); // ✅ Admin e Super Admin podem editar
+        setCanEditTransaction(true);
       } else {
         const response = await usersAPI.getMyGroups();
         groupsData = response.data.groups || [];
         const hasEditPermission = groupsData.some((g: any) => g.permission === 'EDITOR');
         setCanCreateTransaction(hasEditPermission);
-        setCanEditTransaction(false); // ✅ Líder NÃO pode editar
+        setCanEditTransaction(false);
       }
-      
+
       setGroups(groupsData);
-      
+
       const transactionsRes = await transactionsAPI.getAll();
-      
+
       let transactionsData = [];
       if (Array.isArray(transactionsRes.data)) {
         transactionsData = transactionsRes.data;
       } else if (transactionsRes.data.transactions) {
         transactionsData = transactionsRes.data.transactions;
-      } else {
-        transactionsData = [];
       }
-      
-      const formattedTransactions = transactionsData.map((t: any) => ({
-        ...t,
-        valor: typeof t.valor === 'number' ? t.valor : Number(t.valor),
-      }));
-      
-      setTransactions(formattedTransactions);
+
+      setTransactions(
+        transactionsData.map((t: any) => ({
+          ...t,
+          valor: typeof t.valor === 'number' ? t.valor : Number(t.valor),
+        }))
+      );
     } catch (error) {
       console.error('Erro ao carregar dados:', error);
     } finally {
@@ -86,29 +77,15 @@ export default function TransacoesPage() {
     }
   };
 
-  // Função para editar transação
   const handleEditTransaction = async (data: any) => {
     if (!selectedTransaction) return;
-
-     console.log('📝 Editando transação:', {
-    id: selectedTransaction.id,
-    dados: {
-      descricao: data.descricao,
-      valor: data.valor,
-      tipo: data.tipo,
-      paymentType: data.paymentType,
-    }
-  });
-
     try {
-      const response = await transactionsAPI.update(selectedTransaction.id, {
+      await transactionsAPI.update(selectedTransaction.id, {
         descricao: data.descricao,
         valor: data.valor,
         paymentType: data.paymentType,
         tipo: data.tipo,
       });
-      
-      console.log('Resposta do back: ', response.data);
       await loadData();
       setIsEditModalOpen(false);
       setSelectedTransaction(null);
@@ -117,12 +94,7 @@ export default function TransacoesPage() {
     }
   };
 
-  const handleOpenEditModal = (transaction: any) => {
-    setSelectedTransaction(transaction);
-    setIsEditModalOpen(true);
-  };
-
-  const filteredTransactions = transactions.filter(t => {
+  const filteredTransactions = transactions.filter((t) => {
     if (filterType !== 'all' && t.type !== filterType) return false;
     if (filterGroup !== 'all' && t.groupId !== filterGroup) return false;
     if (filterPayment !== 'all') {
@@ -133,30 +105,20 @@ export default function TransacoesPage() {
     return true;
   });
 
-  const calculateSaldoPix = () => {
-    return filteredTransactions.reduce((sum, t) => {
-      if (t.paymentType !== 'PIX') return sum;
-      return sum + (t.type === 'ENTRADA' ? t.valor : -t.valor);
-    }, 0);
-  };
+  const saldoPix = filteredTransactions.reduce((sum, t) => {
+    if (t.paymentType !== 'PIX') return sum;
+    return sum + (t.type === 'ENTRADA' ? t.valor : -t.valor);
+  }, 0);
 
-  const calculateSaldoDinheiro = () => {
-    return filteredTransactions.reduce((sum, t) => {
-      if (t.paymentType !== 'DINHEIRO') return sum;
-      return sum + (t.type === 'ENTRADA' ? t.valor : -t.valor);
-    }, 0);
-  };
+  const saldoDinheiro = filteredTransactions.reduce((sum, t) => {
+    if (t.paymentType !== 'DINHEIRO') return sum;
+    return sum + (t.type === 'ENTRADA' ? t.valor : -t.valor);
+  }, 0);
 
-  const saldoPix = calculateSaldoPix();
-  const saldoDinheiro = calculateSaldoDinheiro();
   const saldoTotal = saldoPix + saldoDinheiro;
 
-  const formatCurrency = (value: number) => {
-    return new Intl.NumberFormat('pt-BR', {
-      style: 'currency',
-      currency: 'BRL',
-    }).format(value);
-  };
+  const formatCurrency = (value: number) =>
+    new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value);
 
   const formatDate = (dateString: string) => {
     if (!dateString) return '';
@@ -170,7 +132,7 @@ export default function TransacoesPage() {
   };
 
   const getGroupName = (groupId: string) => {
-    const group = groups.find(g => g.id === groupId);
+    const group = groups.find((g) => g.id === groupId);
     return group?.nome || groupId;
   };
 
@@ -196,188 +158,101 @@ export default function TransacoesPage() {
               </p>
             </div>
           </div>
-          
-          {canCreateTransaction && (
-            <Button
-              onClick={() => router.push('/transacoes/nova')}
-              variant="default"
-              className="bg-success hover:bg-green-700 hidden md:flex items-center gap-2"
-            >
-              <Plus className="w-4 h-4" />
-              Nova Transação
-            </Button>
-          )}
+
+          {canCreateTransaction && <RegisterTransactionButton />}
         </div>
       </div>
 
-      {/* Summary Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
-        <Card>
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm text-gray-600 mb-1">Saldo PIX</p>
-              <p className={`text-xl font-bold ${saldoPix >= 0 ? 'text-success' : 'text-danger'}`}>
-                {formatCurrency(saldoPix)}
-              </p>
-            </div>
-            <div className="p-3 bg-blue-50 rounded-lg">
-              <CreditCard className="w-5 h-5 text-primary" />
-            </div>
-          </div>
-        </Card>
+      {/* Saldo Cards */}
+      <SaldoCards
+        saldos={{ saldoTotal, saldoPix, saldoDinheiro }}
+        labelBanco="Saldo PIX"
+        labelCaixa="Saldo Dinheiro"
+      />
 
-        <Card>
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm text-gray-600 mb-1">Saldo Dinheiro</p>
-              <p className={`text-xl font-bold ${saldoDinheiro >= 0 ? 'text-success' : 'text-danger'}`}>
-                {formatCurrency(saldoDinheiro)}
-              </p>
-            </div>
-            <div className="p-3 bg-green-50 rounded-lg">
-              <Banknote className="w-5 h-5 text-success" />
-            </div>
-          </div>
-        </Card>
-
-        <Card>
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm text-gray-600 mb-1">Saldo Total</p>
-              <p className={`text-xl font-bold ${saldoTotal >= 0 ? 'text-success' : 'text-danger'}`}>
-                {formatCurrency(saldoTotal)}
-              </p>
-            </div>
-            <div className="p-3 bg-indigo-50 rounded-lg">
-              <Wallet className="w-5 h-5 text-indigo-600" />
-            </div>
-          </div>
-        </Card>
-      </div>
-
-      {/* Filters */}
+      {/* Filtros */}
       <Card className="mb-6">
-        <div className="flex flex-wrap items-center gap-2">
-          {/* Tipo */}
-          <div className="flex rounded-lg border border-gray-200 bg-white overflow-hidden text-sm">
-            {(['all', 'ENTRADA', 'SAIDA'] as const).map((type) => (
-              <button
-                key={type}
-                onClick={() => setFilterType(type)}
-                className={`px-3 py-1.5 transition-colors ${
-                  filterType === type
-                    ? type === 'ENTRADA'
-                      ? 'bg-green-100 text-green-800 font-medium'
-                      : type === 'SAIDA'
-                      ? 'bg-red-100 text-red-800 font-medium'
-                      : 'bg-gray-100 text-gray-800 font-medium'
-                    : 'text-gray-500 hover:bg-gray-50'
-                }`}
-              >
-                {type === 'all' ? 'Todos' : type === 'ENTRADA' ? 'Entradas' : 'Saídas'}
-              </button>
-            ))}
-          </div>
-
-          {/* Pagamento */}
-          <select
-            value={filterPayment}
-            onChange={(e) => setFilterPayment(e.target.value as any)}
-            className="text-sm px-2 py-1.5 border border-gray-200 rounded-lg bg-white text-gray-700 focus:outline-none focus:ring-2 focus:ring-primary"
-          >
-            <option value="all">Pagamento</option>
-            <option value="PIX">PIX</option>
-            <option value="DINHEIRO">Dinheiro</option>
-            <option value="CARTAO">Cartão</option>
-            <option value="TRANSFERENCIA">Transferência</option>
-          </select>
-
-          {/* Grupo */}
-          <select
-            value={filterGroup}
-            onChange={(e) => setFilterGroup(e.target.value)}
-            className="text-sm px-2 py-1.5 border border-gray-200 rounded-lg bg-white text-gray-700 focus:outline-none focus:ring-2 focus:ring-primary"
-          >
-            <option value="all">Todos os grupos</option>
-            {groups.map((g: any) => (
-              <option key={g.id} value={g.id}>{g.nome}</option>
-            ))}
-          </select>
-
-          {/* Contador */}
-          <span className="ml-auto text-sm text-gray-500">
-            {filteredTransactions.length} {filteredTransactions.length === 1 ? 'transação' : 'transações'}
-          </span>
-        </div>
+        <TransactionFilters
+          filterType={filterType}
+          onFilterTypeChange={setFilterType}
+          filterPayment={filterPayment}
+          onFilterPaymentChange={setFilterPayment}
+          filterGroup={filterGroup}
+          onFilterGroupChange={setFilterGroup}
+          groups={groups}
+          totalCount={filteredTransactions.length}
+        />
       </Card>
 
+      {/* Tabela */}
       <ResponsiveTable
         columns={[
-          { 
-            key: 'data', 
-            header: 'Data', 
-            render: (value, item) => formatDate(item.data || item.createdAt) 
+          {
+            key: 'data',
+            header: 'Data',
+            render: (value, item) => formatDate(item.data || item.createdAt),
           },
-          { 
-            key: 'grupo', 
-            header: 'Grupo', 
-            render: (value, item) => getGroupName(item.groupId) 
+          {
+            key: 'grupo',
+            header: 'Grupo',
+            render: (value, item) => getGroupName(item.groupId),
           },
           { key: 'descricao', header: 'Descrição' },
-          { 
-            key: 'type', 
-            header: 'Tipo', 
+          {
+            key: 'type',
+            header: 'Tipo',
             render: (value, item) => (
-              <span className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium ${
-                item.type === 'ENTRADA' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
-              }`}>
-                {item.type === 'ENTRADA' ? <ArrowUpCircle className="w-3 h-3" /> : <ArrowDownCircle className="w-3 h-3" />}
+              <span
+                className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium ${
+                  item.type === 'ENTRADA' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+                }`}
+              >
+                {item.type === 'ENTRADA' ? (
+                  <ArrowUpCircle className="w-3 h-3" />
+                ) : (
+                  <ArrowDownCircle className="w-3 h-3" />
+                )}
                 {item.type === 'ENTRADA' ? 'Entrada' : 'Saída'}
               </span>
-            )
+            ),
           },
-          { 
-            key: 'paymentType', 
-            header: 'Pagamento', 
+          {
+            key: 'paymentType',
+            header: 'Pagamento',
             render: (value, item) => {
-              if (item.paymentType === 'PIX') return 'PIX';
-              if (item.paymentType === 'DINHEIRO') return 'Dinheiro';
-              if (item.paymentType === 'CARTAO_CREDITO') return 'Cartão Crédito';
-              if (item.paymentType === 'CARTAO_DEBITO') return 'Cartão Débito';
-              if (item.paymentType === 'TRANSFERENCIA') return 'Transferência';
-              return '-';
-            }
+              const map: Record<string, string> = {
+                PIX: 'PIX',
+                DINHEIRO: 'Dinheiro',
+                CARTAO_CREDITO: 'Cartão Crédito',
+                CARTAO_DEBITO: 'Cartão Débito',
+                TRANSFERENCIA: 'Transferência',
+              };
+              return map[item.paymentType] ?? '-';
+            },
           },
-          { 
-            key: 'valor', 
-            header: 'Valor', 
+          {
+            key: 'valor',
+            header: 'Valor',
             render: (value, item) => (
               <span className={`font-semibold ${item.type === 'ENTRADA' ? 'text-success' : 'text-danger'}`}>
                 {item.type === 'ENTRADA' ? '+' : '-'} {formatCurrency(item.valor)}
               </span>
-            )
+            ),
           },
-          { 
-            key: 'user', 
-            header: 'Criado por', 
-            render: (value, item) => item.user?.nome || 'Sistema' 
+          {
+            key: 'user',
+            header: 'Criado por',
+            render: (value, item) => item.user?.nome || 'Sistema',
           },
         ]}
         data={filteredTransactions}
-        onEdit={handleOpenEditModal}
+        onEdit={(t) => {
+          setSelectedTransaction(t);
+          setIsEditModalOpen(true);
+        }}
         canEdit={canEditTransaction}
       />
       
-      {/* Botão Mobile Floating Action Button */}
-      {canCreateTransaction && (
-        <button
-          onClick={() => router.push('/transacoes/nova')}
-          className="fixed bottom-6 right-6 w-14 h-14 bg-success text-white rounded-full shadow-lg hover:bg-green-700 transition-all hover:scale-110 flex items-center justify-center z-50 md:hidden"
-        >
-          <Plus className="w-6 h-6" />
-        </button>
-      )}
-
       {/* Modal de Edição */}
       {selectedTransaction && (
         <EditTransactionModal

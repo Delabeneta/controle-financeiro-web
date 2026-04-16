@@ -5,7 +5,7 @@ import { useAuth } from '@/src/context/AuthContext';
 import { dashboardApi } from '@/src/lib/api';
 import { StatCard } from '@/components/card';
 import { Breadcrumb } from '@/components/BreadCrumb';
-import { Plus, Wallet, Users, UsersRound, Loader2 } from 'lucide-react';
+import { Wallet, Users, UsersRound, Loader2 } from 'lucide-react';
 import {
   BarChart,
   Bar,
@@ -44,7 +44,7 @@ export default function DashboardPage() {
       try {
         setLoading(true);
 
-        const res = await dashboardApi.get(); // 🔥 BACKEND FAZ TUDO
+        const res = await dashboardApi.get(); 
         setDashboardData(res.data);
       } catch (err) {
         console.error('Erro ao carregar dashboard:', err);

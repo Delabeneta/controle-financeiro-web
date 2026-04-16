@@ -5,7 +5,6 @@ import { useAuth } from '@/src/context/AuthContext';
 import { useRouter } from 'next/navigation';
 import { useEffect } from 'react';
 import { Sidebar } from '@/components/sidebar';
-import { FloatingActionButton } from '@/components/FloatingActionButton'; // ← REMOVER esta importação
 
 export default function ProtectedLayout({
   children,

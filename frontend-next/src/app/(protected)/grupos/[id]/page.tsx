@@ -11,17 +11,17 @@ import { Button } from '@/src/components/ui/button';
 import { Breadcrumb } from '@/components/BreadCrumb';
 import { 
   ArrowLeft, 
-  Plus, 
   ArrowUpCircle, 
   ArrowDownCircle,
   User,
   Filter,
   Loader2,
-  CreditCard,
-  Banknote,
   Calendar,
 } from 'lucide-react';
 import { ResponsiveTable } from '@/components/ResponsiveTable';
+import { SaldoCards } from '@/components/Saldocards';
+import { RegisterTransactionButton } from '@/components/RegisterTransactionButton';
+import { TransactionTypeFilter } from '@/components/transactiontypefilter';
 
 type TabType = 'transacoes' | 'membros';
 
@@ -157,55 +157,22 @@ export default function GrupoDetailPage() {
           </div>
           
           {/* Botão Registrar Transação - Desktop */}
-          {canEdit && (
-            <Button
-              onClick={() => router.push(`/transacoes/nova?groupId=${id}`)}
-              className="bg-green-500 hover:bg-green-700 text-white"
-            >
-              <Plus className="w-4 h-4 mr-2" />
-              Registrar Transação
-            </Button>
-          )}
+  {canEdit && <RegisterTransactionButton groupId={id} />}
+
         </div>
       </div>
 
       {/* Balance Cards */}
-      {saldos && (
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-          <Card className="bg-gradient-to-br from-primary to-primary-dark text-white">
-            <p className="text-white/80 mb-2">Saldo Total</p>
-            <p className="text-3xl font-bold">{formatCurrency(saldos.saldoTotal)}</p>
-          </Card>
-          
-          <Card>
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-gray-600 mb-1">Saldo em Banco</p>
-                <p className={`text-xl font-bold ${saldos.saldoBanco >= 0 ? 'text-success' : 'text-danger'}`}>
-                  {formatCurrency(saldos.saldoBanco)}
-                </p>
-              </div>
-              <div className="p-3 bg-blue-50 rounded-lg">
-                <CreditCard className="w-5 h-5 text-primary" />
-              </div>
-            </div>
-          </Card>
+                    {saldos && (
+          <SaldoCards
+            saldos={{
+              saldoTotal: saldos.saldoTotal,
+              saldoBanco: saldos.saldoBanco,
+              saldoCaixa: saldos.saldoCaixa,
+            }}
+          />
+        )}
 
-          <Card>
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-gray-600 mb-1">Saldo em Caixa</p>
-                <p className={`text-xl font-bold ${saldos.saldoCaixa >= 0 ? 'text-success' : 'text-danger'}`}>
-                  {formatCurrency(saldos.saldoCaixa)}
-                </p>
-              </div>
-              <div className="p-3 bg-green-50 rounded-lg">
-                <Banknote className="w-5 h-5 text-success" />
-              </div>
-            </div>
-          </Card>
-        </div>
-      )}
 
       {/* Tabs */}
       <div className="border-b border-gray-200 mb-6">
@@ -248,15 +215,10 @@ export default function GrupoDetailPage() {
           <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-6 gap-3">
             <div className="flex items-center gap-4">
               <Filter className="w-5 h-5 text-gray-600 hidden sm:block" />
-              <select
-                value={filterType}
-                onChange={(e) => setFilterType(e.target.value as any)}
-                className="w-48 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
-              >
-                <option value="all">Todas</option>
-                <option value="ENTRADA">Entradas</option>
-                <option value="SAIDA">Saídas</option>
-              </select>
+              <TransactionTypeFilter
+                value={filterType} 
+                onChange={setFilterType}
+              />
             </div>
             <p className="text-sm text-gray-600">
               {filteredTransactions.length} {filteredTransactions.length === 1 ? 'transação' : 'transações'}

@@ -9,6 +9,9 @@ const inter = Inter({ subsets: ['latin'] });
 export const metadata: Metadata = {
   title: 'Gestão Financeira',
   description: 'Plataforma de gestão financeira para grupos',
+  icons:{
+    icon: 'favicon.png', 
+  }
 };
 
 export default function RootLayout({

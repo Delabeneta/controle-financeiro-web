@@ -46,11 +46,19 @@ export function ResponsiveTable({ columns, data, onRowClick, onEdit, canEdit}: R
       ) }]
     : columns;
 
-  const formatDate = (dateString: string) => {
-    if (!dateString) return '';
-    const d = new Date(dateString);
-    return `${d.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' })} · ${d.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}`;
-  };
+    const formatDateTime = (dateString: string) => {
+      if (!dateString) return '';
+      const date = new Date(dateString);
+      // Ajustar para o fuso de São Paulo
+      return date.toLocaleString('pt-BR', {
+        timeZone: 'America/Sao_Paulo',
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+      });
+    };
 
   const formatCurrency = (value: number) =>
     new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value);
@@ -128,7 +136,7 @@ export function ResponsiveTable({ columns, data, onRowClick, onEdit, canEdit}: R
                     {item.descricao}
                   </span>
                   <span className="text-xs text-gray-400 whitespace-nowrap flex-shrink-0">
-                    {formatDate(dataStr)}
+                    {formatDateTime(dataStr)}
                   </span>
                 </div>
                 {/* Linha 2: grupo + valor */}

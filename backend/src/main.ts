@@ -1,10 +1,9 @@
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { ValidationPipe } from '@nestjs/common';
-import { Request, Response, NextFunction } from 'express';
 
 async function bootstrap() {
-  console.log('🚀 Iniciando aplicação...');
+  process.env.TZ = 'America/Sao_Paulo';
 
   const app = await NestFactory.create(AppModule);
 
@@ -15,8 +14,6 @@ async function bootstrap() {
       whitelist: true,
     }),
   );
-
-  console.log('✅ Pipes ok');
 
   app.enableCors({
     origin: [
@@ -29,11 +26,7 @@ async function bootstrap() {
     allowedHeaders: ['Content-Type', 'Authorization'],
   });
 
-  console.log('✅ CORS ok');
-
   const port = Number(process.env.PORT) || 10000;
-
-  console.log('🔥 Tentando subir servidor...');
 
   await app.listen(port, '0.0.0.0');
 

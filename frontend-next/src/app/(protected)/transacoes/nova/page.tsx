@@ -104,17 +104,39 @@ const loadGroups = async () => {
       setSubmitting(true);
       setError(null);
       
-      const transactionData = {
-        groupId: formData.groupId,
-        tipo: formData.tipo,
-        valor: parseFloat(formData.valor),
-        descricao: formData.descricao,
-        data: new Date(formData.data).toISOString(),
-        paymentType: formData.paymentType,
-      };
+         const dataAtual = new Date();
+    
+        // Se o usuário selecionou uma data específica, usa ela
+        let dataParaEnviar;
+        if (formData.data) {
+          // Usa a data selecionada pelo usuário
+          dataParaEnviar = new Date(formData.data);
+          // Mantém o horário atual
+          dataParaEnviar.setHours(dataAtual.getHours(), dataAtual.getMinutes(), 0, 0);
+        } else {
+          // Usa a data atual
+          dataParaEnviar = dataAtual;
+        }
+          
+        const saoPauloOffset = -3;
+        const utc = dataParaEnviar.getTime() + (dataParaEnviar.getTimezoneOffset() * 60000);
+        const saoPauloTime = new Date(utc + (3600000 * saoPauloOffset));
+        const selectedDate = formData.data ? new Date(formData.data) : new Date();
+    selectedDate.setHours(saoPauloTime.getHours(), saoPauloTime.getMinutes(), 0, 0);
+    
+          const transactionData = {
+            groupId: formData.groupId,
+            tipo: formData.tipo,
+            valor: parseFloat(formData.valor),
+            descricao: formData.descricao,
+            data: selectedDate.toISOString(),
+            paymentType: formData.paymentType,
+          };
       
+      console.log('Data enviada:', transactionData.data);
+
       await transactionsAPI.create(transactionData);
-      
+
       setSuccess(true);
       
       setTimeout(() => {

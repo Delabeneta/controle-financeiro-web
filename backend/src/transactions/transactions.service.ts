@@ -43,22 +43,28 @@ export class TransactionsService {
       throw new NotFoundException('Grupo não encontrado');
     }
 
-    // 🔹 SUPER_ADMIN: pode criar em qualquer grupo (qualquer organização)
-    if (user.role === Role.SUPER_ADMIN) {
-      return this.createTransaction(data, userId);
+    let dataHora: Date;
+
+    if (data.data) {
+      dataHora = new Date(data.data);
+    } else {
+      const now = new Date();
+      dataHora = new Date(now.getFullYear(), now.getMonth(), now.getDate());
     }
 
-    // 🔹 ADMIN: só pode criar em grupos da sua organização
+    if (user.role === Role.SUPER_ADMIN) {
+      return this.createTransaction(data, userId, dataHora);
+    }
+
     if (user.role === Role.ADMIN) {
       if (group.organizationId !== user.organizationId) {
         throw new ForbiddenException(
           'Você só pode criar transações em grupos da sua organização',
         );
       }
-      return this.createTransaction(data, userId);
+      return this.createTransaction(data, userId, dataHora);
     }
 
-    // 🔹 LIDER: só pode criar se for EDITOR do grupo
     if (user.role === Role.LIDER) {
       const userGroup = await this.prisma.userGroup.findUnique({
         where: {
@@ -79,21 +85,25 @@ export class TransactionsService {
         );
       }
 
-      return this.createTransaction(data, userId);
+      return this.createTransaction(data, userId, dataHora);
     }
 
     throw new ForbiddenException('Sem permissão para criar transação');
   }
 
   // Método auxiliar para criar transação
-  private async createTransaction(data: CreateTransactionDto, userId: string) {
+  private async createTransaction(
+    data: CreateTransactionDto,
+    userId: string,
+    dataHora,
+  ) {
     return this.prisma.transaction.create({
       data: {
         type: data.tipo,
         valor: data.valor,
         descricao: data.descricao,
         paymentType: data.paymentType,
-        data: new Date(data.data),
+        data: dataHora,
         groupId: data.groupId,
         createdBy: userId,
       },

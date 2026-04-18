@@ -123,7 +123,7 @@ export default function GrupoDetailPage() {
         }
       };
 
-  const canEdit = user?.role === 'ADMIN' || user?.role === 'SUPER_ADMIN' || user?.role === 'LIDER';
+  const canEdit = user?.role === 'ADMIN' || user?.role === 'SUPER_ADMIN';
 
   if (loading) {
     return (
@@ -296,7 +296,7 @@ export default function GrupoDetailPage() {
     setSelectedTransaction(t);
     setIsEditModalOpen(true);
             }}
-            canEdit={user?.role === 'ADMIN' || user?.role === 'SUPER_ADMIN'}
+            canEdit={canEdit}
           />
 
           {selectedTransaction && (

@@ -4,7 +4,7 @@
 
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/src/context/AuthContext';
-import { usersAPI, groupsAPI, userGroupsAPI } from '@/src/lib/api';
+import { usersAPI, groupsAPI, userGroupsAPI, adminAPI } from '@/src/lib/api';
 import { Card } from '@/components/card';
 import { Button } from '@/src/components/ui/button';
 import { Breadcrumb } from '@/components/BreadCrumb';
@@ -141,7 +141,7 @@ function LinkUserModal({
 }
 
 // Modal de criar usuário
-function CreateUserModal({ isOpen, onClose, onCreate }: { isOpen: boolean; onClose: () => void; onCreate: (data: any) => Promise<void> }) {
+function CreateUserModal({ isOpen, onClose, onCreate, organizations = [] }: { isOpen: boolean; onClose: () => void; onCreate: (data: any) => Promise<void>; organizations?: any[]; }) {
   const { user: currentUser } = useAuth();
   const [formData, setFormData] = useState({
     nome: '',
@@ -153,6 +153,18 @@ function CreateUserModal({ isOpen, onClose, onCreate }: { isOpen: boolean; onClo
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
+  useEffect(() => {
+    if (isOpen && currentUser) {
+      // Se for SUPER_ADMIN, deixa vazio para escolher
+      if (currentUser.role === 'SUPER_ADMIN') {
+        setFormData(prev => ({ ...prev, organizationId: '' }));
+      } else {
+        // Se for ADMIN, usa a organização do usuário logado
+        setFormData(prev => ({ ...prev, organizationId: currentUser.organizationId || '' }));
+      }
+    }
+  }, [isOpen, currentUser]);
+
   if (!isOpen) return null;
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -160,6 +172,13 @@ function CreateUserModal({ isOpen, onClose, onCreate }: { isOpen: boolean; onClo
     setError('');
     setLoading(true);
     try {
+            // Validar se tem organizationId (exceto para SUPER_ADMIN)
+      if (!formData.organizationId && formData.role !== 'SUPER_ADMIN') {
+        setError('Organização é obrigatória');
+        setLoading(false);
+        return;
+      }
+     
       await onCreate(formData);
       onClose();
       setFormData({
@@ -167,7 +186,7 @@ function CreateUserModal({ isOpen, onClose, onCreate }: { isOpen: boolean; onClo
         email: '',
         senha: '123456',
         role: 'LIDER',
-        organizationId: currentUser?.organizationId || '',
+        organizationId: '',
       });
     } catch (err: any) {
       setError(err.response?.data?.message || 'Erro ao criar usuário');
@@ -231,8 +250,33 @@ function CreateUserModal({ isOpen, onClose, onCreate }: { isOpen: boolean; onClo
             >
               <option value="LIDER">Líder</option>
               <option value="ADMIN">Admin</option>
+              {currentUser?.role === 'SUPER_ADMIN' && (
+                <option value="SUPER_ADMIN"> Super Admin</option>
+              )}
             </select>
           </div>
+
+                            {/* Campo de organização - SELECT para SUPER_ADMIN */}
+              {currentUser?.role === 'SUPER_ADMIN' && formData.role !== 'SUPER_ADMIN' && (
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Organização *
+                  </label>
+                  <select
+                    value={formData.organizationId}
+                    onChange={(e) => setFormData({ ...formData, organizationId: e.target.value })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
+                    required
+                  >
+                    <option value="">Selecione uma organização</option>
+                    {organizations.map((org) => (
+                      <option key={org.id} value={org.id}>
+                        {org.nome}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              )}
 
           <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
             <p className="text-xs text-blue-900">
@@ -258,6 +302,7 @@ export default function UsuariosPage() {
   const { user: currentUser } = useAuth();
   const [users, setUsers] = useState<any[]>([]);
   const [groups, setGroups] = useState<any[]>([]);
+  const [organizations, setOrganizations] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [showAddModal, setShowAddModal] = useState(false);
   const [showLinkModal, setShowLinkModal] = useState(false);
@@ -266,7 +311,21 @@ export default function UsuariosPage() {
   useEffect(() => {
     loadUsers();
     loadGroups();
+    if( currentUser?.role === 'SUPER_ADMIN'){
+      loadOrganizations();
+    }
   }, [currentUser]);
+
+
+ const loadOrganizations = async () => {
+    try {
+      const response = await adminAPI.getOrganizations();
+      setOrganizations(response.data || []);
+    } catch (error) {
+      console.error('Erro ao carregar organizações:', error);
+    }
+  };
+
 
   const loadUsers = async () => {
     try {
@@ -435,6 +494,7 @@ export default function UsuariosPage() {
         isOpen={showAddModal}
         onClose={() => setShowAddModal(false)}
         onCreate={handleCreateUser}
+        organizations={organizations}
       />
 
       {selectedUser && (

@@ -37,7 +37,7 @@ export class UsersService {
         email: data.email,
         senha: passwordHash,
         organizationId: data.organizationId,
-        role: data.role || 'LIDER', // deixar assim, de inicio.
+        role: data.role,
       },
       /*select: {
         id: true,
@@ -75,7 +75,6 @@ export class UsersService {
     return user;
   }
 
-  // src/users/users.service.ts
   async findAll(user: User) {
     // Define o escopo baseado na role
     const where =
@@ -133,7 +132,7 @@ export class UsersService {
   }
 
   async update(id: string, data: UpdateUserDto) {
-    await this.findOne(id); // valida se existe
+    await this.findOne(id);
 
     const updateData: any = {};
 
@@ -186,7 +185,6 @@ export class UsersService {
     // Formatar a resposta com saldos calculados
     const groups = await Promise.all(
       userGroups.map(async (ug) => {
-        // ✅ Usar o GroupsService injetado
         const saldos = await this.groupsService.calcularSaldosDoGrupo(
           ug.group.id,
         );

@@ -37,7 +37,7 @@ export class UsersController {
 
   @Get()
   findAll(@Req() req: RequestWithUser) {
-    return this.usersService.findAll(req.user); // 👈 PASSAR req.user
+    return this.usersService.findAll(req.user);
   }
 
   @Get(':id')

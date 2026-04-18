@@ -22,6 +22,7 @@ import { ResponsiveTable } from '@/components/ResponsiveTable';
 import { SaldoCards } from '@/components/Saldocards';
 import { RegisterTransactionButton } from '@/components/RegisterTransactionButton';
 import { TransactionTypeFilter } from '@/components/transactiontypefilter';
+import { EditTransactionModal } from '@/components/EditTransactionModal';
 
 type TabType = 'transacoes' | 'membros';
 
@@ -40,6 +41,8 @@ export default function GrupoDetailPage() {
   const [error, setError] = useState<string | null>(null);
   const [members, setMembers] = useState<any[]>([]);
   const [membersLoading, setMembersLoading] = useState(false);
+  const [selectedTransaction, setSelectedTransaction] = useState<any>(null);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
 
   useEffect(() => {
     if (id) {
@@ -102,6 +105,23 @@ export default function GrupoDetailPage() {
       minute: '2-digit',
     });
   };
+
+        const handleEditTransaction = async (data: any) => {
+        if (!selectedTransaction) return;
+        try {
+          await transactionsAPI.update(selectedTransaction.id, {
+            descricao: data.descricao,
+            valor: data.valor,
+            paymentType: data.paymentType,
+            tipo: data.tipo,
+          });
+          await loadData();
+          setIsEditModalOpen(false);
+          setSelectedTransaction(null);
+        } catch (error) {
+          console.error('Erro ao editar transação:', error);
+        }
+      };
 
   const canEdit = user?.role === 'ADMIN' || user?.role === 'SUPER_ADMIN' || user?.role === 'LIDER';
 
@@ -272,8 +292,36 @@ export default function GrupoDetailPage() {
             ]}
             data={filteredTransactions}
             onRowClick={(item) => console.log('Clicked transaction:', item)}
+                     onEdit={(t) => {
+    setSelectedTransaction(t);
+    setIsEditModalOpen(true);
+            }}
+            canEdit={user?.role === 'ADMIN' || user?.role === 'SUPER_ADMIN'}
           />
-        </div>
+
+          {selectedTransaction && (
+            <EditTransactionModal
+              isOpen={isEditModalOpen}
+              onClose={() => {
+                setIsEditModalOpen(false);
+                setSelectedTransaction(null);
+              }}
+              transaction={{
+                id: selectedTransaction.id,
+                nome: selectedTransaction.descricao,
+                descricao: selectedTransaction.descricao,
+                tipo: selectedTransaction.type,
+                paymentType: selectedTransaction.paymentType || 'PIX',
+                valor: selectedTransaction.valor,
+                data: selectedTransaction.data || selectedTransaction.createdAt,
+                createdBy: selectedTransaction.user?.nome || 'Sistema',
+                categoria: 'Outro',
+                groupName: group.nome,
+              }}
+              onSave={handleEditTransaction}
+            />
+          )}
+              </div>
       )}
 
       {/* Membros Tab */}

@@ -417,8 +417,8 @@ const loadGroups = async () => {
                 type="submit"
                 className={`flex-1 order-1 sm:order-2 ${
                   formData.tipo === 'ENTRADA'
-                    ? 'bg-success hover:bg-green-700'
-                    : 'bg-danger hover:bg-red-600'
+                   ? 'bg-green-500 hover:bg-green-700'
+                   : 'bg-red-500 hover:bg-red-600'
                 }`}
                 disabled={submitting}
               >

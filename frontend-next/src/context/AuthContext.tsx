@@ -17,73 +17,65 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const router = useRouter();
-  const pathname = usePathname(); // ← Mover para fora do restoreSession
+  const pathname = usePathname();
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  // Função para restaurar sessão
-  const restoreSession = useCallback((): User | null => {
+  // Restaurar sessão
+  useEffect(() => {
     const token = localStorage.getItem('access_token');
     const savedUser = localStorage.getItem('user');
-    
-    console.log('🔍 Token encontrado:', token ? 'Sim' : 'Não');
     
     if (token && savedUser) {
       try {
         const userData = JSON.parse(savedUser);
+        setUser(userData);
         api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
-        console.log('✅ Token configurado no axios');
-        return userData;
       } catch (error) {
-        console.error('❌ Erro ao restaurar sessão:', error);
+        console.error('Erro ao restaurar sessão:', error);
         localStorage.removeItem('access_token');
         localStorage.removeItem('user');
-        delete api.defaults.headers.common['Authorization'];
       }
     }
     
-    return null;
+    setIsLoading(false);
   }, []);
 
-  // Executar restauração apenas uma vez
+  // Redirecionamentos - executa quando isLoading muda
   useEffect(() => {
-    const restoredUser = restoreSession();
-    setUser(restoredUser);
-    setIsLoading(false);
-    
-    // 🔥 Redirecionar se não tiver token e não estiver na página de login
-    if (!restoredUser && pathname !== '/login') {
-      console.log('🚫 Sem autenticação, redirecionando para login');
-      router.replace('/login');
+    if (!isLoading) {
+      // Sem usuário e não está no login
+      if (!user && pathname !== '/login') {
+        router.replace('/login');
+      }
+      
+      // Com usuário e está no login
+      if (user && pathname === '/login') {
+        router.replace('/dashboard');
+      }
     }
-  }, [restoreSession, pathname, router]);
+  }, [isLoading, user, pathname, router]);
 
   const login = async (email: string, password: string) => {
     try {
-      console.log('🔐 Tentando login com:', email);
       const response = await authAPI.login(email, password);
-      console.log('✅ Resposta do login:', response.data);
-      
       const { access_token, user: userData } = response.data;
       
       localStorage.setItem('access_token', access_token);
       localStorage.setItem('user', JSON.stringify(userData));
-      
       api.defaults.headers.common['Authorization'] = `Bearer ${access_token}`;
       
       setUser(userData);
-      console.log('🎉 Login realizado com sucesso');
       
-      // Redirecionar para dashboard após login
-      router.push('/dashboard');
+      // Redirecionar após login
+      router.replace('/dashboard');
     } catch (error) {
-      console.error('❌ Login error:', error);
+      console.error('Login error:', error);
       throw new Error('E-mail ou senha incorretos');
     }
   };
 
   const logout = useCallback(() => {
-    console.log('🚪 Fazendo logout...');
     localStorage.removeItem('access_token');
     localStorage.removeItem('user');
     delete api.defaults.headers.common['Authorization'];
@@ -100,7 +92,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     });
   }, []);
 
-  // Loading state
   if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen">

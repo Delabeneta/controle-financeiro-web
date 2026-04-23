@@ -3,6 +3,7 @@
 import React, { createContext, useContext, useState, ReactNode, useEffect, useCallback } from 'react';
 import { api, authAPI, User } from '@/src/lib/api';
 import { usePathname, useRouter } from 'next/navigation';
+import { Loader2 } from 'lucide-react';
 
 interface AuthContextType {
   user: User | null;
@@ -109,7 +110,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     });
   }, []);
 
-  if (!mounted) return null;
+  if (!mounted) return (
+  <div style={{ 
+    display: 'flex', 
+    alignItems: 'center', 
+    justifyContent: 'center', 
+    minHeight: '100vh' 
+  }}>
+    <Loader2 className="w-8 h-8 animate-spin text-primary" />
+  </div>
+);
 
   return (
     <AuthContext.Provider value={{ user, login, logout, updateUser, isAuthenticated: !!user }}>

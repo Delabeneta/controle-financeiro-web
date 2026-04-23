@@ -7,8 +7,6 @@ async function bootstrap() {
 
   const app = await NestFactory.create(AppModule);
 
-  console.log('✅ Nest criado');
-
   app.useGlobalPipes(
     new ValidationPipe({
       whitelist: true,
@@ -19,6 +17,7 @@ async function bootstrap() {
     origin: [
       'http://localhost:3000',
       'http://localhost:3001',
+      'http://192.168.0.100:3001',
       'https://controlefinanceiro-theta.vercel.app',
     ],
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],

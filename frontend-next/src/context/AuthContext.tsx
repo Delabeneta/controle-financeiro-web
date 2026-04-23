@@ -1,4 +1,3 @@
-// src/context/AuthContext.tsx
 'use client';
 
 import React, { createContext, useContext, useState, ReactNode, useEffect, useCallback } from 'react';
@@ -15,59 +14,77 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
+const safeStorage = {
+  get: (key: string): string | null => {
+    try {
+      if (typeof window === 'undefined') return null;
+      return localStorage.getItem(key);
+    } catch {
+      return null;
+    }
+  },
+  set: (key: string, value: string): void => {
+    try {
+      if (typeof window === 'undefined') return;
+      localStorage.setItem(key, value);
+    } catch {
+      console.warn('localStorage não disponível');
+    }
+  },
+  remove: (key: string): void => {
+    try {
+      if (typeof window === 'undefined') return;
+      localStorage.removeItem(key);
+    } catch {}
+  },
+};
+
 export function AuthProvider({ children }: { children: ReactNode }) {
   const router = useRouter();
   const pathname = usePathname();
   const [user, setUser] = useState<User | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const [mounted, setMounted] = useState(false);
 
-  // Restaurar sessão
   useEffect(() => {
-    const token = localStorage.getItem('access_token');
-    const savedUser = localStorage.getItem('user');
-    
+    const token = safeStorage.get('access_token');
+    const savedUser = safeStorage.get('user');
+
     if (token && savedUser) {
       try {
         const userData = JSON.parse(savedUser);
         setUser(userData);
         api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
-      } catch (error) {
-        console.error('Erro ao restaurar sessão:', error);
-        localStorage.removeItem('access_token');
-        localStorage.removeItem('user');
+      } catch {
+        safeStorage.remove('access_token');
+        safeStorage.remove('user');
       }
     }
-    
-    setIsLoading(false);
+
+    setMounted(true); // ← true, não false
   }, []);
 
-  // Redirecionamentos - executa quando isLoading muda
   useEffect(() => {
-    if (!isLoading) {
-      // Sem usuário e não está no login
-      if (!user && pathname !== '/login') {
-        router.replace('/login');
-      }
-      
-      // Com usuário e está no login
-      if (user && pathname === '/login') {
-        router.replace('/dashboard');
-      }
-    }
-  }, [isLoading, user, pathname, router]);
+    if (!mounted) return;
 
+    if (!user && pathname !== '/login') {
+      router.replace('/login');
+    }
+    if (user && pathname === '/login') {
+      router.replace('/dashboard');
+    }
+  }, [mounted, user, pathname, router]);
+
+  // Todas as funções ANTES do return condicional
   const login = async (email: string, password: string) => {
     try {
       const response = await authAPI.login(email, password);
       const { access_token, user: userData } = response.data;
-      
-      localStorage.setItem('access_token', access_token);
-      localStorage.setItem('user', JSON.stringify(userData));
+
+      safeStorage.set('access_token', access_token);
+      safeStorage.set('user', JSON.stringify(userData));
       api.defaults.headers.common['Authorization'] = `Bearer ${access_token}`;
-      
+
       setUser(userData);
-      
-      // Redirecionar após login
       router.replace('/dashboard');
     } catch (error) {
       console.error('Login error:', error);
@@ -76,8 +93,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const logout = useCallback(() => {
-    localStorage.removeItem('access_token');
-    localStorage.removeItem('user');
+    safeStorage.remove('access_token');
+    safeStorage.remove('user');
     delete api.defaults.headers.common['Authorization'];
     setUser(null);
     router.push('/login');
@@ -87,18 +104,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUser(prev => {
       if (!prev) return prev;
       const updated = { ...prev, ...data };
-      localStorage.setItem('user', JSON.stringify(updated));
+      safeStorage.set('user', JSON.stringify(updated));
       return updated;
     });
   }, []);
 
-  if (isLoading) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
-      </div>
-    );
-  }
+  if (!mounted) return null;
 
   return (
     <AuthContext.Provider value={{ user, login, logout, updateUser, isAuthenticated: !!user }}>

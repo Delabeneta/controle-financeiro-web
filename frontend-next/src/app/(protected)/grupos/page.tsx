@@ -27,7 +27,6 @@ function CreateGroupModal({
 }) {
   const [formData, setFormData] = useState({
     nome: '',
-    saldoInicial: 0,
     organizationId: '',
   });
   const [loading, setLoading] = useState(false);
@@ -41,13 +40,12 @@ function CreateGroupModal({
       const dataToSend = {
         nome: formData.nome,
         organizationId: formData.organizationId,
-        saldoInicial: formData.saldoInicial,
       };
       
       console.log('Enviando dados:', dataToSend);
       await onSave(dataToSend);
       onClose();
-      setFormData({ nome: '', saldoInicial: 0, organizationId: '' });
+      setFormData({ nome: '', organizationId: '' });
     } catch (error) {
       console.error('Erro ao criar grupo:', error);
     } finally {
@@ -99,19 +97,7 @@ function CreateGroupModal({
             </div>
           )}
           
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Saldo Inicial (opcional)
-            </label>
-            <input
-              type="number"
-              step="0.01"
-              value={formData.saldoInicial || ''}
-              onChange={(e) => setFormData({ ...formData, saldoInicial: e.target.value === '' ? 0 : parseFloat(e.target.value) })}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
-              placeholder="0,00"
-            />
-          </div>
+    
           
           <div className="flex gap-3 pt-4">
             <Button type="button" variant="outline" onClick={onClose} className="flex-1">
@@ -133,7 +119,6 @@ interface GroupWithBalance {
   saldoTotal: number;
   saldoBanco: number;
   saldoCaixa: number;
-  saldoInicial: number;
   createdAt: string;
   membersCount: number;
   permission?: string;
@@ -197,7 +182,6 @@ export default function GruposPage() {
       saldoTotal: group.saldoTotal || 0,
       saldoBanco: group.saldoBanco || 0,
       saldoCaixa: group.saldoCaixa || 0,
-      saldoInicial: group.saldoInicial || 0,
       createdAt: group.createdAt || group.joinedAt,
       membersCount: group.membersCount || 0,
       permission: group.permission,
@@ -216,17 +200,11 @@ const handleCreateGroup = async (data: any) => {
     ...data,
     organizationId: data.organizationId || user?.organizationId,
   };
-  await groupsAPI.create(payload);  // ← payload
+  await groupsAPI.create(payload); 
   await loadGroups();
 };
 
-  const handleSaveGroup = async (data: any) => {
-    if (selectedGroup) {
-      await groupsAPI.updateSaldoInicial(selectedGroup.id, data.saldoInicial);
-      await loadGroups();
-    }
-  };
-
+  
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat('pt-BR', {
       style: 'currency',
@@ -342,25 +320,7 @@ const handleCreateGroup = async (data: any) => {
         </div>
       )}
 
-      {/* Modais - manter igual */}
-      {selectedGroup && (
-        <EditGroupModal
-          isOpen={isModalOpen}
-          onClose={() => setIsModalOpen(false)}
-          group={{
-            id: selectedGroup.id,
-            nome: selectedGroup.nome,
-            liderNome: selectedGroup.nome || 'Não definido',
-            saldoDinheiro: selectedGroup.saldoCaixa,
-            saldoBanco: selectedGroup.saldoBanco,
-            saldoInicial: selectedGroup.saldoInicial,
-            totalTransacoes: 0,
-          }}
-          onSave={handleSaveGroup}
-        />
-      )}
-
-      <CreateGroupModal
+       <CreateGroupModal
         isOpen={isCreateModalOpen}
         onClose={() => setIsCreateModalOpen(false)}
         onSave={handleCreateGroup}

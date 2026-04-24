@@ -14,7 +14,6 @@ interface EditGroupModalProps {
     liderNome: string;
     saldoDinheiro: number;
     saldoBanco: number;
-    saldoInicial: number;
     totalTransacoes: number;
   };
   onSave: (data: unknown) => void;
@@ -24,7 +23,6 @@ export function EditGroupModal({ isOpen, onClose, group, onSave }: EditGroupModa
   const [formData, setFormData] = useState({
     nome: group.nome,
     liderNome: group.liderNome,
-    saldoInicial: group.saldoInicial,
   });
   const [loading, setLoading] = useState(false);
 
@@ -87,21 +85,7 @@ export function EditGroupModal({ isOpen, onClose, group, onSave }: EditGroupModa
             </div>
           </div>
 
-          {/* Saldo inicial (editável) */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Saldo inicial (editável)
-            </label>
-            <input
-              type="number"
-              step="0.01"
-              value={formData.saldoInicial}
-              onChange={(e) => setFormData({ ...formData, saldoInicial: parseFloat(e.target.value) })}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
-            />
-          </div>
-
-          {/* Em dinheiro (apenas leitura) */}
+                 {/* Em dinheiro (apenas leitura) */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
               Em dinheiro

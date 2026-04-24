@@ -331,7 +331,6 @@ export default function UsuariosPage() {
     try {
       setLoading(true);
       const response = await usersAPI.getAll();
-      console.log('Usuários carregados:', response.data);
       setUsers(response.data || []);
     } catch (error) {
       console.error('Erro ao carregar usuários:', error);

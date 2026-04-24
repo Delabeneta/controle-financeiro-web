@@ -1,3 +1,4 @@
+// src/transactions/transactions.controller.ts
 import {
   Controller,
   Get,
@@ -5,16 +6,16 @@ import {
   Body,
   Param,
   Req,
-  UnauthorizedException,
   UseGuards,
   Query,
   Patch,
+  Delete,
 } from '@nestjs/common';
 import { TransactionsService } from './transactions.service';
 import { CreateTransactionDto } from './dto/create-transaction.dto';
-import { AuthGuard } from 'src/auth/auth.guard';
-import { User } from '@prisma/client';
 import { UpdateTransactionDto } from './dto/update-transaction.dto';
+import { AuthGuard } from 'src/auth/auth.guard';
+import { PaymentType, User } from '@prisma/client';
 
 interface RequestWithUser extends Request {
   user: User;
@@ -24,68 +25,63 @@ interface RequestWithUser extends Request {
 @UseGuards(AuthGuard)
 export class TransactionsController {
   constructor(private readonly transactionsService: TransactionsService) {}
+
+  // ─── CRIAR TRANSAÇÃO ──────────────────────────────────────────────────────────
   @Post()
-  async create(
+  create(
     @Body() createTransactionDto: CreateTransactionDto,
-    @Req() req: RequestWithUser, // ou usar um decorator @CurrentUser()
+    @Req() req: RequestWithUser,
   ) {
-    const userId = req.user?.id; // Pega o ID do usuário logado
-    if (!userId) {
-      throw new UnauthorizedException('Usuário não encontrado no token');
-    }
-    return this.transactionsService.create(createTransactionDto, userId);
+    return this.transactionsService.create(createTransactionDto, req.user);
   }
+
+  // ─── LISTAR TRANSAÇÕES COM FILTROS OPCIONAIS ──────────────────────────────────
   @Get()
-  findAll(@Req() req: RequestWithUser) {
-    if (!req.user) {
-      throw new UnauthorizedException();
+  findAll(
+    @Req() req: RequestWithUser,
+    @Query('type') type?: 'ENTRADA' | 'SAIDA',
+    @Query('paymentType') paymentType?: PaymentType,
+    @Query('groupId') groupId?: string,
+  ) {
+    if (type || paymentType || groupId) {
+      return this.transactionsService.findAllWithFilters(
+        { type, paymentType, groupId },
+        req.user,
+      );
     }
 
     return this.transactionsService.findAll(req.user);
   }
 
+  // ─── LISTAR POR GRUPO ─────────────────────────────────────────────────────────
   @Get('group/:groupId')
-  async findByGroup(
+  findByGroup(
     @Param('groupId') groupId: string,
     @Req() req: RequestWithUser,
-    @Query('type') type?: 'ENTRADA' | 'SAIDA', // ← NOVO
+    @Query('type') type?: 'ENTRADA' | 'SAIDA',
   ) {
     return this.transactionsService.findByGroup(groupId, type, req.user);
   }
 
-  @Get()
-  async findAllWithFilters(
-    @Req() req: RequestWithUser,
-    @Query('type') type?: 'ENTRADA' | 'SAIDA',
-    @Query('paymentType') paymentType?: string,
-    @Query('groupId') groupId?: string,
-  ) {
-    return this.transactionsService.findAllWithFilters(
-      { type, paymentType, groupId },
-      req.user,
-    );
-  }
-
+  // ─── BUSCAR UMA TRANSAÇÃO ─────────────────────────────────────────────────────
   @Get(':id')
-  async findOne(@Param('id') id: string, @Req() req: RequestWithUser) {
-    const userId = req.user?.id;
-    if (!userId) {
-      throw new UnauthorizedException('Usuário não autenticado');
-    }
+  findOne(@Param('id') id: string, @Req() req: RequestWithUser) {
     return this.transactionsService.findOne(id, req.user);
   }
 
-  // backend/src/transactions/transactions.controller.ts
+  // ─── EDITAR TRANSAÇÃO ─────────────────────────────────────────────────────────
   @Patch(':id')
-  async update(
+  update(
     @Param('id') id: string,
     @Body() updateTransactionDto: UpdateTransactionDto,
     @Req() req: RequestWithUser,
   ) {
-    const userId = req.user?.id;
-    if (!userId) {
-      throw new UnauthorizedException('Usuário não encontrado no token');
-    }
-    return this.transactionsService.update(id, updateTransactionDto, userId);
+    return this.transactionsService.update(id, updateTransactionDto, req.user);
+  }
+
+  // ─── DELETAR TRANSAÇÃO ────────────────────────────────────────────────────────
+  @Delete(':id')
+  delete(@Param('id') id: string, @Req() req: RequestWithUser) {
+    return this.transactionsService.delete(id, req.user);
   }
 }

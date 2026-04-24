@@ -1,4 +1,4 @@
-// admin.controller.ts
+// src/admin/admin.controller.ts
 import {
   Body,
   Controller,
@@ -7,16 +7,23 @@ import {
   Param,
   UseGuards,
   Req,
-  UnauthorizedException,
+  ForbiddenException,
 } from '@nestjs/common';
 import { AdminService } from './admin.service';
 import { CreateOrganizationDto } from './dto/create-organization.dto';
-import { AuthGuard } from 'src/auth/auth.guard'; // ← Corrigido o caminho
+import { AuthGuard } from 'src/auth/auth.guard';
 import type { Request } from 'express';
-import { User } from '@prisma/client';
+import { Role, User } from '@prisma/client';
 
 interface RequestWithUser extends Request {
   user: User;
+}
+
+// Helper para checar roles — evita repetir if/throw em cada método
+function requireRole(user: User, ...roles: Role[]) {
+  if (!roles.includes(user.role)) {
+    throw new ForbiddenException('Você não tem permissão para esta ação');
+  }
 }
 
 @UseGuards(AuthGuard)
@@ -24,64 +31,72 @@ interface RequestWithUser extends Request {
 export class AdminController {
   constructor(private adminService: AdminService) {}
 
-  // Criar organização com admin
+  // ─── CRIAR ORGANIZAÇÃO ────────────────────────────────────────────────────────
+  // Apenas SUPER_ADMIN pode criar organizações
   @Post('/create-organization')
-  async create(
-    @Body() body: CreateOrganizationDto,
-    @Req() req: RequestWithUser,
-  ) {
-    if (!req.user) {
-      throw new UnauthorizedException('user nao autenticado');
-    }
-    const currentUserId = req.user.id;
-    return this.adminService.createOrganizationWithAdmin(body, currentUserId);
+  create(@Body() body: CreateOrganizationDto, @Req() req: RequestWithUser) {
+    requireRole(req.user, Role.SUPER_ADMIN);
+    return this.adminService.createOrganizationWithAdmin(body, req.user.id);
   }
 
-  // ✅ NOVO: Listar todas organizações (apenas SUPER_ADMIN)
+  // ─── LISTAR TODAS AS ORGANIZAÇÕES ────────────────────────────────────────────
+  // Apenas SUPER_ADMIN pode listar todas
   @Get('/organizations')
-  async findAllOrganizations(@Req() req: RequestWithUser) {
-    const currentUserId = req.user?.id;
-    return this.adminService.findAllOrganizations(currentUserId);
+  findAllOrganizations(@Req() req: RequestWithUser) {
+    requireRole(req.user, Role.SUPER_ADMIN);
+    return this.adminService.findAllOrganizations();
   }
 
-  // ✅ NOVO: Buscar organização por ID
+  // ─── BUSCAR ORGANIZAÇÃO POR ID ────────────────────────────────────────────────
+  // SUPER_ADMIN vê qualquer uma, ADMIN só vê a sua
   @Get('/organizations/:id')
-  async findOneOrganization(
-    @Param('id') id: string,
-    @Req() req: RequestWithUser,
-  ) {
-    const currentUserId = req.user?.id;
-    return this.adminService.findOneOrganization(id, currentUserId);
+  findOneOrganization(@Param('id') id: string, @Req() req: RequestWithUser) {
+    requireRole(req.user, Role.SUPER_ADMIN, Role.ADMIN);
+    return this.adminService.findOneOrganization(id, req.user);
   }
 
-  // ✅ NOVO: Buscar minha organização (para ADMINS)
+  // ─── MINHA ORGANIZAÇÃO ────────────────────────────────────────────────────────
+  // ADMIN busca a própria organização sem precisar informar o ID
   @Get('/my-organization')
-  async findMyOrganization(@Req() req: RequestWithUser) {
-    const currentUserId = req.user?.id;
-    return this.adminService.findMyOrganization(currentUserId);
+  findMyOrganization(@Req() req: RequestWithUser) {
+    requireRole(req.user, Role.ADMIN);
+
+    if (!req.user.organizationId) {
+      throw new ForbiddenException('Você não está vinculado a uma organização');
+    }
+
+    return this.adminService.findOneOrganization(
+      req.user.organizationId,
+      req.user,
+    );
   }
 
+  // ─── SALDO DE UMA ORGANIZAÇÃO ─────────────────────────────────────────────────
+  // SUPER_ADMIN vê qualquer uma, ADMIN só vê a sua
   @Get('/organizations/:id/balances')
-  async getOrganizationWithBalance(
-    @Param('id') id: string,
-    @Req() request: RequestWithUser,
-  ) {
-    const currentUserId = request.user?.id;
-    if (!currentUserId) {
-      throw new UnauthorizedException('Usuário não autenticado');
+  getOrganizationBalance(@Param('id') id: string, @Req() req: RequestWithUser) {
+    requireRole(req.user, Role.SUPER_ADMIN, Role.ADMIN);
+
+    if (req.user.role === Role.ADMIN && req.user.organizationId !== id) {
+      throw new ForbiddenException(
+        'Você só pode ver o saldo da sua organização',
+      );
     }
-    return this.adminService.getOrganizationWithBalance(id);
+
+    return this.adminService.calcularSaldoDaOrganizacao(id);
   }
 
-  // ✅ NOVA ROTA: Buscar minha organização com saldos
+  // ─── SALDO DA MINHA ORGANIZAÇÃO ───────────────────────────────────────────────
   @Get('/my-organization/balances')
-  async getMyOrganizationWithBalance(@Req() request: RequestWithUser) {
-    const currentUserId = request.user?.id;
-    if (!currentUserId) {
-      throw new UnauthorizedException('Usuário não autenticado');
+  getMyOrganizationBalance(@Req() req: RequestWithUser) {
+    requireRole(req.user, Role.ADMIN);
+
+    if (!req.user.organizationId) {
+      throw new ForbiddenException('Você não está vinculado a uma organização');
     }
 
-    const myOrg = await this.adminService.findMyOrganization(currentUserId);
-    return this.adminService.getOrganizationWithBalance(myOrg.id);
+    return this.adminService.calcularSaldoDaOrganizacao(
+      req.user.organizationId,
+    );
   }
 }

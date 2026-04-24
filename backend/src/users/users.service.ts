@@ -2,6 +2,7 @@
 /* eslint-disable @typescript-eslint/no-unsafe-member-access */
 import {
   ConflictException,
+  ForbiddenException,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
@@ -155,6 +156,26 @@ export class UsersService {
     return this.prisma.user.delete({ where: { id } });
   }
 
+  async removeIfSameOrganization(id: string, requesterOrgId: string) {
+    const user = await this.findOne(id);
+
+    // Verifica se o usuário a ser deletado pertence à mesma organização
+    if (user.organizationId !== requesterOrgId) {
+      throw new ForbiddenException(
+        'Você só pode excluir usuários da sua organização',
+      );
+    }
+
+    // Não permite deletar outro ADMIN
+    if (user.role === 'ADMIN' || user.role === 'SUPER_ADMIN') {
+      throw new ForbiddenException(
+        'Você não tem permissão para excluir administradores',
+      );
+    }
+
+    return this.prisma.user.delete({ where: { id } });
+  }
+
   async getUserGroups(userId: string) {
     const user = await this.prisma.user.findUnique({
       where: { id: userId },
@@ -198,7 +219,6 @@ export class UsersService {
           joinedAt: ug.createdAt,
           membersCount: ug.group._count.users,
           transactionsCount: ug.group._count.transactions,
-          saldoInicial: saldos.saldoInicial,
           saldoTotal: saldos.saldoTotal,
           saldoBanco: saldos.saldoBanco,
           saldoCaixa: saldos.saldoCaixa,

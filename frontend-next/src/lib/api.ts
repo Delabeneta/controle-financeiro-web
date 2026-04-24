@@ -91,13 +91,8 @@ export const groupsAPI = {
   getOne: (id: string) => api.get(`/groups/${id}`),
   getSaldos: (id: string) => api.get(`/groups/${id}/saldos`),
   getBalance: (id: string) => api.get(`/groups/${id}/balance`),
-  updateSaldoInicial: (id: string, saldoInicial: number) =>
-    api.post(`/groups/${id}/saldo-inicial`, { saldoInicial }),
-  create: (data: {
-    nome: string;
-    organizationId: string;
-    saldoInicial?: number;
-  }) => api.post("/groups", data),
+  create: (data: { nome: string; organizationId: string }) =>
+    api.post("/groups", data),
 };
 
 // Transactions

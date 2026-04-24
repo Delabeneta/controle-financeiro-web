@@ -47,6 +47,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
+   const initAuth = async () => {
     const token = safeStorage.get('access_token');
     const savedUser = safeStorage.get('user');
 
@@ -55,14 +56,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         const userData = JSON.parse(savedUser);
         setUser(userData);
         api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+        setUser(userData);
+
       } catch {
         safeStorage.remove('access_token');
         safeStorage.remove('user');
       }
     }
 
-    setMounted(true); // ← true, não false
-  }, []);
+    setMounted(true); 
+  };
+  
+  initAuth();
+}, []);
 
   useEffect(() => {
     if (!mounted) return;

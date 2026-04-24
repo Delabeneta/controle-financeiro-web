@@ -31,15 +31,21 @@ api.interceptors.request.use(
   },
 );
 
-// Interceptor para tratar erros de autenticação
+let isRedirecting = false; // ← flag fora do interceptor
+
 api.interceptors.response.use(
   (response) => response,
   (error) => {
-    if (error.response?.status === 401 && typeof window !== "undefined") {
-      console.log("Token expirado ou inválido, redirecionando para login...");
+    if (
+      error.response?.status === 401 &&
+      typeof window !== "undefined" &&
+      !isRedirecting
+    ) {
+      isRedirecting = true;
       localStorage.removeItem("access_token");
       localStorage.removeItem("user");
       delete api.defaults.headers.common["Authorization"];
+      window.location.href = "/login";
     }
     return Promise.reject(error);
   },

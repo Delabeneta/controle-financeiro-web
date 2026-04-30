@@ -94,9 +94,9 @@ export function ResponsiveTable({ columns, data, onRowClick, onEdit, canEdit}: R
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
-              {data.map((item, idx) => (
+              {data.map((item) => (
                 <tr
-                  key={idx}
+                  key={item.id}
                   onClick={() => handleCardClick(item)}
                   className={`${onRowClick ? 'cursor-pointer hover:bg-gray-50' : ''} transition-colors`}
                 >

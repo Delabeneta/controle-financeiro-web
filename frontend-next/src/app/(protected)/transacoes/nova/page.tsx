@@ -6,9 +6,9 @@ import { useState, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useAuth } from '@/src/context/AuthContext';
 import { groupsAPI, transactionsAPI, usersAPI } from '@/src/lib/api';
-import { Card } from '@/components/card';
+import { Card } from '@/src/components/card';
 import { Button } from '@/src/components/ui/button';
-import { Breadcrumb } from '@/components/BreadCrumb';
+import { Breadcrumb } from '@/src/components/BreadCrumb';
 import { ArrowLeft, CheckCircle, CreditCard, Banknote, Loader2, TrendingUp, TrendingDown } from 'lucide-react';
 
 export default function NovaTransacaoPage() {

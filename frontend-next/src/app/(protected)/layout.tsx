@@ -4,22 +4,33 @@
 import { useAuth } from '@/src/context/AuthContext';
 import { useRouter } from 'next/navigation';
 import { useEffect } from 'react';
-import { Sidebar } from '@/components/sidebar';
+import { Sidebar } from '@/src/components/sidebar';
+import { Loader2 } from 'lucide-react';
 
 export default function ProtectedLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, isLoading } = useAuth();
   const router = useRouter();
 
   useEffect(() => {
-    if (!isAuthenticated) {
+    if (!isLoading && !isAuthenticated) {
       router.push('/login');
     }
-  }, [isAuthenticated, router]);
+  }, [isLoading, isAuthenticated, router]);
 
+    // se ainda estiver verificando
+     if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen bg-gray-100">
+        <Loader2 className="w-8 h-8 animate-spin text-primary" />
+      </div>
+    );
+  }
+
+    // daqui já verificou. Redireciona direto 
   if (!isAuthenticated) return null;
 
   return (

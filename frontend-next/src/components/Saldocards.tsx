@@ -2,7 +2,7 @@
 'use client';
 
 import { CreditCard, Banknote, Wallet } from 'lucide-react';
-import { Card } from '@/components/card';
+import { Card } from '@/src/components/card';
 
 interface SaldoData {
   saldoTotal: number;

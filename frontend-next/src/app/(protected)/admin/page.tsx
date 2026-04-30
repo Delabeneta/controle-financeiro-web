@@ -6,9 +6,9 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/src/context/AuthContext';
 import { adminAPI } from '@/src/lib/api';
-import { Card } from '@/components/card';
+import { Card } from '@/src/components/card';
 import { Button } from '@/src/components/ui/button';
-import { Breadcrumb } from '@/components/BreadCrumb';
+import { Breadcrumb } from '@/src/components/BreadCrumb';
 import { 
   Plus, 
   Building2, 

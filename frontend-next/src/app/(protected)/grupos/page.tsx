@@ -6,11 +6,11 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/src/context/AuthContext';
 import { usersAPI, groupsAPI, adminAPI } from '@/src/lib/api';
-import { Card } from '@/components/card';
+import { Card } from '@/src/components/card';
 import { Button } from '@/src/components/ui/button';
-import { Breadcrumb } from '@/components/BreadCrumb';
+import { Breadcrumb } from '@/src/components/BreadCrumb';
 import { Plus, Users, Edit, Loader2, X } from 'lucide-react';
-import { EditGroupModal } from '@/components/EditGroupModal';
+import { EditGroupModal } from '@/src/components/EditGroupModal';
 
 function CreateGroupModal({ 
   isOpen, 

@@ -3,7 +3,7 @@
 
 import { useState } from 'react';
 import { Banknote, CreditCard, Trash, X } from 'lucide-react';
-import { Button } from '@/src/components/ui/button';
+import { Button } from './ui/button'; 
 
 interface EditTransactionModalProps {
   isOpen: boolean;

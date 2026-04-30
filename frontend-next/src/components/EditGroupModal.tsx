@@ -3,7 +3,7 @@
 
 import { useState } from 'react';
 import { X} from 'lucide-react';
-import { Button } from '@/src/components/ui/button';
+import { Button } from './ui/button';
 
 interface EditGroupModalProps {
   isOpen: boolean;

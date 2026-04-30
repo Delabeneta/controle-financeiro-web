@@ -6,9 +6,9 @@ import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { useAuth } from '@/src/context/AuthContext';
 import { groupsAPI, transactionsAPI } from '@/src/lib/api';
-import { Card } from '@/components/card';
+import { Card } from '@/src/components/card';
 import { Button } from '@/src/components/ui/button';
-import { Breadcrumb } from '@/components/BreadCrumb';
+import { Breadcrumb } from '@/src/components/BreadCrumb';
 import { 
   ArrowLeft, 
   ArrowUpCircle, 
@@ -18,11 +18,11 @@ import {
   Loader2,
   Calendar,
 } from 'lucide-react';
-import { ResponsiveTable } from '@/components/ResponsiveTable';
-import { SaldoCards } from '@/components/Saldocards';
-import { RegisterTransactionButton } from '@/components/RegisterTransactionButton';
-import { TransactionTypeFilter } from '@/components/transactiontypefilter';
-import { EditTransactionModal } from '@/components/EditTransactionModal';
+import { ResponsiveTable } from '@/src/components/ResponsiveTable';
+import { SaldoCards } from '@/src/components/Saldocards';
+import { RegisterTransactionButton } from '@/src/components/RegisterTransactionButton';
+import { TransactionTypeFilter } from '@/src/components/transactiontypefilter';
+import { EditTransactionModal } from '@/src/components/EditTransactionModal';
 
 type TabType = 'transacoes' | 'membros';
 

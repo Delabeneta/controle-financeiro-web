@@ -6,14 +6,14 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/src/context/AuthContext';
 import { transactionsAPI, usersAPI, groupsAPI } from '@/src/lib/api';
-import { Card } from '@/components/card';
-import { Breadcrumb } from '@/components/BreadCrumb';
+import { Card } from '@/src/components/card';
+import { Breadcrumb } from '@/src/components/BreadCrumb';
 import { ArrowUpCircle, ArrowDownCircle, Loader2 } from 'lucide-react';
-import { ResponsiveTable } from '@/components/ResponsiveTable';
-import { EditTransactionModal } from '@/components/EditTransactionModal';
-import { SaldoCards } from '@/components/Saldocards'; 
-import { TransactionFilters } from '@/components/Transactionfilters';
-import { RegisterTransactionButton } from '@/components/RegisterTransactionButton';
+import { ResponsiveTable } from '@/src/components/ResponsiveTable';
+import { EditTransactionModal } from '@/src/components/EditTransactionModal';
+import { SaldoCards } from '@/src/components/Saldocards'; 
+import { TransactionFilters } from '@/src/components/Transactionfilters';
+import { RegisterTransactionButton } from '@/src/components/RegisterTransactionButton';
 
 export default function TransacoesPage() {
   const router = useRouter();

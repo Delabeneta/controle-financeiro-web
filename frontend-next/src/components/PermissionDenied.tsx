@@ -2,7 +2,7 @@
 'use client';
 
 import { Shield } from 'lucide-react';
-import { Card } from '@/components/card'; 
+import { Card } from '@/src/components/card'; 
 import { Button } from '@/src/components/ui/button';
 import { useRouter } from 'next/navigation';
 

@@ -3,8 +3,8 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/src/context/AuthContext';
 import { dashboardApi } from '@/src/lib/api';
-import { StatCard } from '@/components/card';
-import { Breadcrumb } from '@/components/BreadCrumb';
+import { StatCard } from '@/src/components/card';
+import { Breadcrumb } from '@/src/components/BreadCrumb';
 import { Wallet, Users, UsersRound, Loader2 } from 'lucide-react';
 import {
   BarChart,

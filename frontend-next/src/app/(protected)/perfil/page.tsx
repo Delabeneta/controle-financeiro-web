@@ -3,9 +3,9 @@
 import { useState } from 'react';
 import { useAuth } from '@/src/context/AuthContext';
 import { usersAPI } from '@/src/lib/api';
-import { Card } from '@/components/card';
+import { Card } from '@/src/components/card';
 import { Button } from '@/src/components/ui/button';
-import { Breadcrumb } from '@/components/BreadCrumb';
+import { Breadcrumb } from '@/src/components/BreadCrumb';
 import { Loader2, Eye, EyeOff } from 'lucide-react';
 
 export default function PerfilPage() {

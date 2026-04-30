@@ -1,5 +1,4 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-// src/lib/api.ts
 import axios from "axios";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:10000";
@@ -11,9 +10,9 @@ export const api = axios.create({
   headers: {
     "Content-Type": "application/json",
   },
+  timeout: 30000,
 });
 
-// Interceptor para adicionar token em TODAS as requisições
 api.interceptors.request.use(
   (config) => {
     const token =
@@ -26,12 +25,10 @@ api.interceptors.request.use(
     }
     return config;
   },
-  (error) => {
-    return Promise.reject(error);
-  },
+  (error) => Promise.reject(error),
 );
 
-let isRedirecting = false; // ← flag fora do interceptor
+let isRedirecting = false;
 
 api.interceptors.response.use(
   (response) => response,
@@ -39,19 +36,25 @@ api.interceptors.response.use(
     if (
       error.response?.status === 401 &&
       typeof window !== "undefined" &&
-      !isRedirecting
+      !isRedirecting &&
+      !window.location.pathname.includes("/login")
     ) {
       isRedirecting = true;
+
       localStorage.removeItem("access_token");
       localStorage.removeItem("user");
       delete api.defaults.headers.common["Authorization"];
+
       window.location.href = "/login";
+
+      setTimeout(() => {
+        isRedirecting = false;
+      }, 1000);
     }
     return Promise.reject(error);
   },
 );
 
-// Tipos
 export interface User {
   id: string;
   nome: string;

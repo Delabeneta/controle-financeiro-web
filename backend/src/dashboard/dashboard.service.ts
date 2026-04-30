@@ -10,7 +10,6 @@ export class DashboardService {
   constructor(private prisma: PrismaService) {}
 
   async getDashboard(user: User) {
-    // 1. Buscar grupos do usuário (com transações e contagem de membros)
     const groups = await this.prisma.group.findMany({
       where: this.getGroupWhereByRole(user),
       include: {
@@ -28,7 +27,6 @@ export class DashboardService {
 
     const topGroups: any[] = [];
 
-    // 2. Processamento LOCAL (rápido, sem novas queries)
     for (const group of groups) {
       const saldo = this.calculateGroupBalance(group);
 
@@ -43,10 +41,8 @@ export class DashboardService {
       });
     }
 
-    // Ordenar top grupos
     topGroups.sort((a, b) => b.balance - a.balance);
 
-    // 3. Chart fake estruturado (você pode evoluir depois)
     const chartData = this.buildChartFromGroups(groups);
 
     return {
@@ -58,7 +54,6 @@ export class DashboardService {
     };
   }
 
-  // 🔐 Regras de acesso por role
   private getGroupWhereByRole(user: User) {
     if (user.role === Role.SUPER_ADMIN) {
       return {};
@@ -80,7 +75,6 @@ export class DashboardService {
     };
   }
 
-  // 💰 Calcula saldo do grupo (SEM query extra)
   private calculateGroupBalance(group: any) {
     let totalEntradas = 0;
     let totalSaidas = 0;
@@ -100,7 +94,6 @@ export class DashboardService {
     return saldoInicial + totalEntradas - totalSaidas;
   }
 
-  // 📊 Gera dados do gráfico (últimos 6 meses simples)
   private buildChartFromGroups(groups: any[]) {
     const today = new Date();
 

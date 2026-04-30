@@ -149,7 +149,28 @@ export class TransactionsService {
       return this.updateTransaction(id, data);
     }
 
-    // LIDER: edição desabilitada por ora
+    if (user.role === Role.LIDER) {
+      const userGroup = await this.prisma.userGroup.findUnique({
+        where: {
+          userId_groupId: {
+            userId: user.id,
+            groupId: transaction.groupId,
+          },
+        },
+      });
+
+      if (!userGroup) {
+        throw new ForbiddenException('Você não pertence a este grupo');
+      }
+
+      /*  if (userGroup.permission !== 'EDITOR') {
+        throw new ForbiddenException(
+          'Você não tem permissão para editar transações neste grupo (apenas leitura)',
+        );
+      } */
+
+      return this.updateTransaction(id, data);
+    }
     throw new ForbiddenException('Sem permissão para editar esta transação');
   }
 

@@ -2,7 +2,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Banknote, CreditCard, Trash, X } from 'lucide-react';
+import { Banknote, CreditCard, Calendar, X } from 'lucide-react';
 import { Button } from './ui/button'; 
 
 interface EditTransactionModalProps {
@@ -24,6 +24,12 @@ interface EditTransactionModalProps {
 }
 
 export function EditTransactionModal({ isOpen, onClose, transaction, onSave }: EditTransactionModalProps) {
+  // Formatar a data para YYYY-MM-DD (para o input date)
+  const formatDateForInput = (dateString: string) => {
+    const date = new Date(dateString);
+    return date.toISOString().split('T')[0];
+  };
+
   const [formData, setFormData] = useState({
     nome: transaction.nome,
     descricao: transaction.descricao,
@@ -31,6 +37,7 @@ export function EditTransactionModal({ isOpen, onClose, transaction, onSave }: E
     categoria: transaction.categoria,
     tipo: transaction.tipo,
     paymentType: transaction.paymentType,
+    data: formatDateForInput(transaction.data),
   });
   const [loading, setLoading] = useState(false);
 
@@ -55,7 +62,17 @@ export function EditTransactionModal({ isOpen, onClose, transaction, onSave }: E
     e.preventDefault();
     setLoading(true);
     try {
-      await onSave(formData);
+
+      let dataEnvio;
+    if (formData.data) {
+      const [year, month, day] = formData.data.split('-');
+      dataEnvio = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
+      dataEnvio.setDate(dataEnvio.getDate() + 1);
+    }
+      await onSave({
+        ...formData,
+        data: dataEnvio ? dataEnvio.toISOString() : undefined,
+      });
       onClose();
     } catch (error) {
       console.error('Erro ao salvar:', error);
@@ -67,7 +84,7 @@ export function EditTransactionModal({ isOpen, onClose, transaction, onSave }: E
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50">
       <div className="bg-white rounded-xl shadow-xl w-full max-w-md max-h-[90vh] overflow-y-auto">
-        {/* Header com botão de fechar */}
+        {/* Header */}
         <div className="flex items-center justify-between p-4 border-b">
           <h2 className="text-lg font-semibold text-gray-900">{transaction.nome}</h2>
           <button onClick={onClose} className="p-1 hover:bg-gray-100 rounded-lg transition-colors">
@@ -77,22 +94,6 @@ export function EditTransactionModal({ isOpen, onClose, transaction, onSave }: E
 
         {/* Informações fixas (não editáveis) */}
         <div className="p-4 space-y-3 bg-gray-50 border-b">
-          <div className="flex items-center justify-between">
-            <span className="text-sm text-gray-600">Tipo</span>
-            <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-              transaction.tipo === 'ENTRADA' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
-            }`}>
-              {transaction.tipo === 'ENTRADA' ? 'Entrada' : 'Saída'}
-            </span>
-          </div>
-          <div className="flex items-center justify-between">
-            <span className="text-sm text-gray-600">Forma de pagamento</span>
-            <span className="text-sm text-gray-900">{transaction.paymentType}</span>
-          </div>
-          <div className="flex items-center justify-between">
-            <span className="text-sm text-gray-600">Data</span>
-            <span className="text-sm text-gray-900">{formatDate(transaction.data)}</span>
-          </div>
           <div className="flex items-center justify-between">
             <span className="text-sm text-gray-600">Registrado por</span>
             <span className="text-sm text-gray-900">{transaction.createdBy}</span>
@@ -105,6 +106,7 @@ export function EditTransactionModal({ isOpen, onClose, transaction, onSave }: E
 
         {/* Formulário editável */}
         <form onSubmit={handleSubmit} className="p-4 space-y-4">
+          {/* Nome do registro */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
               Nome do registro
@@ -118,6 +120,7 @@ export function EditTransactionModal({ isOpen, onClose, transaction, onSave }: E
             />
           </div>
 
+          {/* Descrição */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
               Descrição
@@ -129,7 +132,25 @@ export function EditTransactionModal({ isOpen, onClose, transaction, onSave }: E
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary resize-none"
             />
           </div>
- {/* Tipo (ENTRADA/SAÍDA) - EDITÁVEL */}
+
+          {/* Data - EDITÁVEL (apenas data, sem horário) */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Data *
+            </label>
+            <div className="relative">
+              <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+              <input
+                type="date"
+                value={formData.data}
+                onChange={(e) => setFormData({ ...formData, data: e.target.value })}
+                className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
+                required
+              />
+            </div>
+          </div>
+
+          {/* Tipo (ENTRADA/SAÍDA) */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
               Tipo *
@@ -187,7 +208,7 @@ export function EditTransactionModal({ isOpen, onClose, transaction, onSave }: E
             </div>
           </div>
 
-                     {/* Forma de Pagamento - EDITÁVEL */}
+          {/* Forma de Pagamento */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
               Forma de Pagamento *
@@ -244,6 +265,7 @@ export function EditTransactionModal({ isOpen, onClose, transaction, onSave }: E
             />
           </div>
 
+          {/* Categoria */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
               Categoria
@@ -261,6 +283,7 @@ export function EditTransactionModal({ isOpen, onClose, transaction, onSave }: E
             </select>
           </div>
 
+          {/* Botões */}
           <div className="flex gap-3 pt-4">
             <Button
               type="button"

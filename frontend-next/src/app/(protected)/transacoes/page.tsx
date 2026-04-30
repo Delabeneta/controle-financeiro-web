@@ -45,12 +45,12 @@ export default function TransacoesPage() {
         groupsData = response.data || [];
         setCanCreateTransaction(true);
         setCanEditTransaction(true);
-      } else {
+      } else if (user?.role === 'LIDER') {
         const response = await usersAPI.getMyGroups();
         groupsData = response.data.groups || [];
-        const hasEditPermission = groupsData.some((g: any) => g.permission === 'EDITOR');
-        setCanCreateTransaction(hasEditPermission);
-        setCanEditTransaction(false);
+        //const hasEditPermission = groupsData.some((g: any) => g.permission === 'EDITOR');
+        setCanCreateTransaction(true);
+        setCanEditTransaction(true);
       }
 
       setGroups(groupsData);
@@ -85,6 +85,7 @@ export default function TransacoesPage() {
         valor: data.valor,
         paymentType: data.paymentType,
         tipo: data.tipo,
+        data: data.data,
       });
       await loadData();
       setIsEditModalOpen(false);

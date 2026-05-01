@@ -1,6 +1,5 @@
 // src/app/(protected)/layout.tsx
-'use client';
-
+'use client'; 
 import { useAuth } from '@/src/context/AuthContext';
 import { useRouter } from 'next/navigation';
 import { useEffect } from 'react';
@@ -21,8 +20,7 @@ export default function ProtectedLayout({
     }
   }, [isLoading, isAuthenticated, router]);
 
-    // se ainda estiver verificando
-     if (isLoading) {
+  if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen bg-gray-100">
         <Loader2 className="w-8 h-8 animate-spin text-primary" />
@@ -30,7 +28,6 @@ export default function ProtectedLayout({
     );
   }
 
-    // daqui já verificou. Redireciona direto 
   if (!isAuthenticated) return null;
 
   return (

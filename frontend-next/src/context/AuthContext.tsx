@@ -1,9 +1,8 @@
-'use client';
+
 
 import React, { createContext, useContext, useState, ReactNode, useEffect, useCallback } from 'react';
 import { api, authAPI, User } from '@/src/lib/api';
 import { usePathname, useRouter } from 'next/navigation';
-import { Loader2 } from 'lucide-react';
 
 interface AuthContextType {
   user: User | null;

@@ -71,18 +71,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   initAuth();
 }, []);
 
+  const hasRedirected = React.useRef(false);
   useEffect(() => {
-    if (!mounted) return;
+    if (!mounted || hasRedirected.current) return;
 
     if (!user && pathname !== '/login') {
+      hasRedirected.current = true;
       router.replace('/login');
     }
     if (user && pathname === '/login') {
+      hasRedirected.current = true;
       router.replace('/dashboard');
     }
-  }, [mounted, user, pathname, router]);
+  }, [mounted, user, router]);
 
-  // Todas as funções ANTES do return condicional
   const login = async (email: string, password: string) => {
     try {
       const response = await authAPI.login(email, password);
@@ -122,10 +124,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     display: 'flex', 
     alignItems: 'center', 
     justifyContent: 'center', 
-    minHeight: '100vh' 
+    minHeight: '100vh',
+    backgroundColor: '#f9fafb'
   }}>
-    <Loader2 className="w-8 h-8 animate-spin text-primary" />
-  </div>
+    <div style={{
+      width: '2rem',
+      height: '2rem',
+      border: '2px solid #e5e7eb',
+      borderTopColor: '#3b82f6',
+      borderRadius: '50%',
+      animation: 'spin 1s linear infinite'
+    }} />
+    </div>
 );
 
   return (

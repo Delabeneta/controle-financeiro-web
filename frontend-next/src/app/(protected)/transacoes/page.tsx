@@ -8,12 +8,13 @@ import { useAuth } from '@/src/context/AuthContext';
 import { transactionsAPI, usersAPI, groupsAPI } from '@/src/lib/api';
 import { Card } from '@/src/components/card';
 import { Breadcrumb } from '@/src/components/BreadCrumb';
-import { ArrowUpCircle, ArrowDownCircle, Loader2 } from 'lucide-react';
+import { ArrowUpCircle, ArrowDownCircle, Loader2, FileText } from 'lucide-react';
 import { ResponsiveTable } from '@/src/components/ResponsiveTable';
 import { EditTransactionModal } from '@/src/components/EditTransactionModal';
 import { SaldoCards } from '@/src/components/Saldocards'; 
 import { TransactionFilters } from '@/src/components/Transactionfilters';
 import { RegisterTransactionButton } from '@/src/components/RegisterTransactionButton';
+import { StatementModal } from '@/src/components/StatementModal';
 
 export default function TransacoesPage() {
   const router = useRouter();
@@ -26,9 +27,9 @@ export default function TransacoesPage() {
   const [filterType, setFilterType] = useState<'all' | 'ENTRADA' | 'SAIDA'>('all');
   const [filterGroup, setFilterGroup] = useState<string>('all');
   const [filterPayment, setFilterPayment] = useState<'all' | 'PIX' | 'DINHEIRO' | 'CARTAO' | 'TRANSFERENCIA'>('all');
-
   const [selectedTransaction, setSelectedTransaction] = useState<any>(null);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [isStatementModalOpen, setIsStatementModalOpen] = useState(false);
 
   useEffect(() => {
     loadData();
@@ -48,7 +49,6 @@ export default function TransacoesPage() {
       } else if (user?.role === 'LIDER') {
         const response = await usersAPI.getMyGroups();
         groupsData = response.data.groups || [];
-        //const hasEditPermission = groupsData.some((g: any) => g.permission === 'EDITOR');
         setCanCreateTransaction(true);
         setCanEditTransaction(true);
       }
@@ -132,6 +132,19 @@ export default function TransacoesPage() {
     });
   };
 
+  const getDefaultGroupId = () => {
+    if (filterGroup !== 'all' && filterGroup) {
+      return filterGroup;
+    }
+    if (groups.length === 1) {
+      return groups[0].id;
+    }
+    if (groups.length > 0) {
+      return groups[0].id;
+    }
+    return '';
+  };
+
   const getGroupName = (groupId: string) => {
     const group = groups.find((g) => g.id === groupId);
     return group?.nome || groupId;
@@ -147,7 +160,6 @@ export default function TransacoesPage() {
 
   return (
     <div>
-      {/* Header */}
       <div className="mb-6">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
@@ -160,18 +172,25 @@ export default function TransacoesPage() {
             </div>
           </div>
 
-          {canCreateTransaction && <RegisterTransactionButton />}
+          <div className="flex gap-2">
+            <button
+              onClick={() => setIsStatementModalOpen(true)}
+              className="inline-flex items-center gap-2 px-4 py-2 bg-white border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
+            >
+              <FileText className="w-4 h-4" />
+              Extrato
+            </button>
+            {canCreateTransaction && <RegisterTransactionButton />}
+          </div>
         </div>
       </div>
 
-      {/* Saldo Cards */}
       <SaldoCards
         saldos={{ saldoTotal, saldoPix, saldoDinheiro }}
         labelBanco="Saldo PIX"
         labelCaixa="Saldo Dinheiro"
       />
 
-      {/* Filtros */}
       <Card className="mb-6">
         <TransactionFilters
           filterType={filterType}
@@ -185,7 +204,6 @@ export default function TransacoesPage() {
         />
       </Card>
 
-      {/* Tabela */}
       <ResponsiveTable
         columns={[
           {
@@ -254,7 +272,6 @@ export default function TransacoesPage() {
         canEdit={canEditTransaction}
       />
       
-      {/* Modal de Edição */}
       {selectedTransaction && (
         <EditTransactionModal
           isOpen={isEditModalOpen}
@@ -277,6 +294,18 @@ export default function TransacoesPage() {
           onSave={handleEditTransaction}
         />
       )}
+
+      <StatementModal
+        isOpen={isStatementModalOpen}
+        onClose={() => setIsStatementModalOpen(false)}
+        groups={groups}
+        selectedGroupId={getDefaultGroupId()}
+        treasurerName={user?.nome || 'Usuário'}
+        transactions={transactions}
+        saldoPix={saldoPix}
+        saldoDinheiro={saldoDinheiro}
+        saldoTotal={saldoTotal}
+      />
     </div>
   );
 }

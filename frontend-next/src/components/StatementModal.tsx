@@ -1,7 +1,8 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 // src/components/StatementModal.tsx
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { X, Calendar, FileText, ChevronDown, AlertCircle } from 'lucide-react';
 import { PDFDownloadLink } from '@react-pdf/renderer';
 import { StatementPDF } from './StatementPDF';
@@ -42,14 +43,18 @@ export function StatementModal({
   const [selectedGroup, setSelectedGroup] = useState<string>(selectedGroupId);
   const [isGroupOpen, setIsGroupOpen] = useState(false);
   const [dateError, setDateError] = useState('');
+  
+  const prevIsOpenRef = useRef(isOpen);
 
   useEffect(() => {
-    if (isOpen) {
+    if (isOpen && !prevIsOpenRef.current) {
       setSelectedGroup(selectedGroupId);
       setStartDate('');
       setEndDate('');
       setDateError('');
+      setPeriodType('30days');
     }
+    prevIsOpenRef.current = isOpen;
   }, [isOpen, selectedGroupId]);
 
   if (!isOpen) return null;
@@ -178,15 +183,6 @@ export function StatementModal({
   const { entries, expenses, groupTransactionsTotal, groupPixTotal, groupDinheiroTotal } = filterTransactionsByGroupAndDate();
   const { start, end } = getDateRange();
 
-  const formatDateForPDF = (date: Date | null) => {
-    if (!date) return '';
-    return date.toLocaleDateString('pt-BR', {
-      day: '2-digit',
-      month: '2-digit',
-      year: 'numeric',
-    });
-  };
-
   const currentDate = new Date().toLocaleDateString('pt-BR', {
     day: '2-digit',
     month: 'long',
@@ -206,7 +202,7 @@ export function StatementModal({
     return true;
   };
 
-  const pdfDocument = () => {
+  const getPDFDocument = () => {
     const { start, end } = getDateRange();
     if (!start || !end) return null;
     
@@ -230,6 +226,9 @@ export function StatementModal({
     const today = new Date();
     return today.toISOString().split('T')[0];
   };
+
+  const pdfDocument = getPDFDocument();
+  const isPDFReady = canGeneratePDF() && pdfDocument !== null;
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
@@ -407,9 +406,9 @@ export function StatementModal({
           >
             Cancelar
           </button>
-          {canGeneratePDF() && pdfDocument() ? (
+          {isPDFReady ? (
             <PDFDownloadLink
-              document={pdfDocument()}
+              document={pdfDocument as any}
               fileName={`extrato_${getGroupName().replace(/\s/g, '_')}_${new Date().toISOString().split('T')[0]}.pdf`}
               className="flex-1"
             >

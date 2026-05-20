@@ -169,9 +169,12 @@ interface StatementPDFProps {
   endDate: string;
   entries: Transaction[];
   expenses: Transaction[];
-  saldoTotal: number;
-  saldoPix: number;
-  saldoDinheiro: number;
+  saldoPeriodo: number;
+  saldoPixPeriodo: number;
+  saldoDinheiroPeriodo: number;
+  saldoTotalAtual: number;
+  saldoPixAtual: number;
+  saldoDinheiroAtual: number;
   currentDate: string;
 }
 
@@ -182,9 +185,12 @@ export function StatementPDF({
   endDate,
   entries,
   expenses,
-  saldoTotal,
-  saldoPix,
-  saldoDinheiro,
+  saldoPeriodo,
+  saldoPixPeriodo,
+  saldoDinheiroPeriodo,
+  saldoTotalAtual,
+  saldoPixAtual,
+  saldoDinheiroAtual,
   currentDate,
 }: StatementPDFProps) {
   const formatCurrency = (value: number) => {
@@ -298,22 +304,34 @@ export function StatementPDF({
             <Text style={[styles.sectionTitle, { marginTop: 0, backgroundColor: 'transparent', paddingLeft: 0, fontSize: 10 }]}>
               RESUMO DO PERÍODO
             </Text>
-            <View style={styles.balanceRow}>
-              <Text style={styles.balanceLabel}>Saldo Total</Text>
-              <Text style={[
-                styles.balanceValue,
-                { fontWeight: 'bold', color: saldoTotal >= 0 ? '#10b981' : '#ef4444' }
-              ]}>
-                {formatCurrency(saldoTotal)}
+            
+
+            <View style={{ borderTopWidth: 1, borderTopColor: '#e0e0e0', marginVertical: 8 }} />
+
+            <View>
+              <Text style={[styles.balanceLabel, { fontSize: 8, color: '#666', marginBottom: 4 }]}>
               </Text>
-            </View>
-            <View style={styles.balanceRow}>
-              <Text style={styles.balanceLabel}>Saldo em Banco (PIX)</Text>
-              <Text style={styles.balanceValue}>{formatCurrency(saldoPix)}</Text>
-            </View>
-            <View style={styles.balanceRow}>
-              <Text style={styles.balanceLabel}>Saldo em Dinheiro</Text>
-              <Text style={styles.balanceValue}>{formatCurrency(saldoDinheiro)}</Text>
+              <View style={styles.balanceRow}>
+                <Text style={[styles.balanceLabel, { fontSize: 10 }]}>Saldo Total Atual</Text>
+                <Text style={[
+                  styles.balanceValue,
+                  { fontWeight: 'bold', fontSize: 11, color: saldoTotalAtual >= 0 ? '#10b981' : '#ef4444' }
+                ]}>
+                  {formatCurrency(saldoTotalAtual)}
+                </Text>
+              </View>
+              <View style={styles.balanceRow}>
+                <Text style={styles.balanceLabel}>Saldo em Banco (PIX)</Text>
+                <Text style={[styles.balanceValue, { fontWeight: 'bold' }]}>
+                  {formatCurrency(saldoPixAtual)}
+                </Text>
+              </View>
+              <View style={styles.balanceRow}>
+                <Text style={styles.balanceLabel}>Saldo em Dinheiro</Text>
+                <Text style={[styles.balanceValue, { fontWeight: 'bold' }]}>
+                  {formatCurrency(saldoDinheiroAtual)}
+                </Text>
+              </View>
             </View>
           </View>
         </View>

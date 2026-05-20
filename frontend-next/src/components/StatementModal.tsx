@@ -48,6 +48,7 @@ export function StatementModal({
 
   useEffect(() => {
     if (isOpen && !prevIsOpenRef.current) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setSelectedGroup(selectedGroupId);
       setStartDate('');
       setEndDate('');
@@ -55,6 +56,7 @@ export function StatementModal({
       setPeriodType('30days');
     }
     prevIsOpenRef.current = isOpen;
+     
   }, [isOpen, selectedGroupId]);
 
   if (!isOpen) return null;
@@ -180,7 +182,31 @@ export function StatementModal({
     return { entries, expenses, groupTransactionsTotal, groupPixTotal, groupDinheiroTotal };
   };
 
+  const getCurrentBalances = () => {
+    const groupTransactions = transactions.filter((t) => {
+      const matchesGroup = selectedGroup === 'all' ? true : t.groupId === selectedGroup;
+      return matchesGroup;
+    });
+
+    const currentTotal = groupTransactions.reduce((sum, t) => {
+      return sum + (t.type === 'ENTRADA' ? t.valor : -t.valor);
+    }, 0);
+
+    const currentPix = groupTransactions.reduce((sum, t) => {
+      if (t.paymentType !== 'PIX') return sum;
+      return sum + (t.type === 'ENTRADA' ? t.valor : -t.valor);
+    }, 0);
+
+    const currentDinheiro = groupTransactions.reduce((sum, t) => {
+      if (t.paymentType !== 'DINHEIRO') return sum;
+      return sum + (t.type === 'ENTRADA' ? t.valor : -t.valor);
+    }, 0);
+
+    return { currentTotal, currentPix, currentDinheiro };
+  };
+  
   const { entries, expenses, groupTransactionsTotal, groupPixTotal, groupDinheiroTotal } = filterTransactionsByGroupAndDate();
+  const { currentTotal, currentPix, currentDinheiro } = getCurrentBalances();
   const { start, end } = getDateRange();
 
   const currentDate = new Date().toLocaleDateString('pt-BR', {
@@ -214,9 +240,12 @@ export function StatementModal({
         endDate={end.toISOString()}
         entries={entries}
         expenses={expenses}
-        saldoTotal={groupTransactionsTotal}
-        saldoPix={groupPixTotal}
-        saldoDinheiro={groupDinheiroTotal}
+        saldoPeriodo={groupTransactionsTotal}
+        saldoPixPeriodo={groupPixTotal}
+        saldoDinheiroPeriodo={groupDinheiroTotal}
+        saldoTotalAtual={currentTotal}
+        saldoPixAtual={currentPix}
+        saldoDinheiroAtual={currentDinheiro}
         currentDate={currentDate}
       />
     );

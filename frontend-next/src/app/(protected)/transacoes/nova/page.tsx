@@ -90,31 +90,25 @@ export default function NovaTransacaoPage() {
       setSubmitting(true);
       setError(null);
 
-      const dataAtual = new Date();
+      const agora = new Date();
 
-      let dataParaEnviar;
+      let dataParaEnviar: Date;
       if (formData.data) {
-        dataParaEnviar = new Date(formData.data);
-        dataParaEnviar.setHours(dataAtual.getHours(), dataAtual.getMinutes(), 0, 0);
+        const [year, month, day] = formData.data.split('-').map(Number);
+        dataParaEnviar = new Date(year, month - 1, day, agora.getHours(), agora.getMinutes(), 0, 0);
       } else {
-        dataParaEnviar = dataAtual;
+        dataParaEnviar = agora;
       }
-
-      const saoPauloOffset = -3;
-      const utc = dataParaEnviar.getTime() + (dataParaEnviar.getTimezoneOffset() * 60000);
-      const saoPauloTime = new Date(utc + (3600000 * saoPauloOffset));
-      const selectedDate = formData.data ? new Date(formData.data) : new Date();
-      selectedDate.setHours(saoPauloTime.getHours(), saoPauloTime.getMinutes(), 0, 0);
 
       const transactionData = {
         groupId: formData.groupId,
         tipo: formData.tipo,
         valor: parseFloat(formData.valor),
         descricao: formData.descricao,
-        data: selectedDate.toISOString(),
+        data: dataParaEnviar.toISOString(),
         paymentType: formData.paymentType,
       };
-
+    
       await transactionsAPI.create(transactionData);
 
       setSuccess(true);

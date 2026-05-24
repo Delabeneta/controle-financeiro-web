@@ -63,11 +63,10 @@ export function EditTransactionModal({ isOpen, onClose, transaction, onSave }: E
     setLoading(true);
     try {
 
-      let dataEnvio;
+    let dataEnvio: Date | undefined;
     if (formData.data) {
-      const [year, month, day] = formData.data.split('-');
-      dataEnvio = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
-      dataEnvio.setDate(dataEnvio.getDate() + 1);
+      const [year, month, day] = formData.data.split('-').map(Number);
+      dataEnvio = new Date(year, month - 1, day, 12, 0, 0, 0);
     }
       await onSave({
         ...formData,

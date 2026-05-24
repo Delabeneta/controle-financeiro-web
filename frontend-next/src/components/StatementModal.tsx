@@ -122,32 +122,36 @@ export function StatementModal({
     }
   };
 
-  const getDateRange = (): { start: Date | null; end: Date | null } => {
-    const today = new Date();
-    
-    if (periodType === '15days') {
-      const start = new Date(today);
-      start.setDate(today.getDate() - 15);
-      return { start, end: today };
-    } 
-    
-    if (periodType === '30days') {
-      const start = new Date(today);
-      start.setDate(today.getDate() - 30);
-      return { start, end: today };
-    }
-    
-    if (periodType === 'custom' && startDate && endDate) {
-      const start = new Date(startDate);
-      const end = new Date(endDate);
-      end.setHours(23, 59, 59, 999);
-      if (!isNaN(start.getTime()) && !isNaN(end.getTime())) {
-        return { start, end };
+    const getDateRange = (): { start: Date | null; end: Date | null } => {
+      const today = new Date();
+      today.setHours(23, 59, 59, 999); // final do dia de hoje
+
+      if (periodType === '15days') {
+        const start = new Date();
+        start.setDate(start.getDate() - 15);
+        start.setHours(0, 0, 0, 0); // início do dia
+        return { start, end: today };
       }
-    }
-    
-    return { start: null, end: null };
-  };
+
+      if (periodType === '30days') {
+        const start = new Date();
+        start.setDate(start.getDate() - 30);
+        start.setHours(0, 0, 0, 0);
+        return { start, end: today };
+      }
+
+      if (periodType === 'custom' && startDate && endDate) {
+        const [sy, sm, sd] = startDate.split('-').map(Number);
+        const [ey, em, ed] = endDate.split('-').map(Number);
+        const start = new Date(sy, sm - 1, sd, 0, 0, 0, 0);   // local meia-noite
+        const end = new Date(ey, em - 1, ed, 23, 59, 59, 999); // local fim do dia
+        if (!isNaN(start.getTime()) && !isNaN(end.getTime())) {
+          return { start, end };
+        }
+      }
+
+      return { start: null, end: null };
+    };
 
   const filterTransactionsByGroupAndDate = () => {
     const { start, end } = getDateRange();

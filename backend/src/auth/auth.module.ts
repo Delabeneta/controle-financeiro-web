@@ -7,7 +7,6 @@ import { AuthService } from './auth.service';
 import { JwtModule } from '@nestjs/jwt';
 import * as dotenv from 'dotenv';
 
-// Garante que o .env seja lido antes do JwtModule.register()
 dotenv.config();
 
 @Global()
@@ -16,7 +15,7 @@ dotenv.config();
     JwtModule.register({
       global: true,
       secret: process.env.JWT_SECRET,
-      signOptions: { expiresIn: '1h', algorithm: 'HS256' },
+      signOptions: { expiresIn: '3h', algorithm: 'HS256' },
     }),
   ],
   controllers: [AuthController],

@@ -40,7 +40,6 @@ export class AuthService {
 
     const token = this.jwtService.sign(payload);
 
-    // ✅ Retornar também os dados do usuário (frontend espera isso)
     return {
       access_token: token,
       user: {

@@ -8,13 +8,14 @@ import { useAuth } from '@/src/context/AuthContext';
 import { transactionsAPI, usersAPI, groupsAPI } from '@/src/lib/api';
 import { Card } from '@/src/components/card';
 import { Breadcrumb } from '@/src/components/BreadCrumb';
-import { ArrowUpCircle, ArrowDownCircle, Loader2, FileText } from 'lucide-react';
+import { ArrowUpCircle, ArrowDownCircle, Loader2, FileText, Download } from 'lucide-react';
 import { ResponsiveTable } from '@/src/components/ResponsiveTable';
 import { EditTransactionModal } from '@/src/components/EditTransactionModal';
 import { SaldoCards } from '@/src/components/Saldocards'; 
 import { TransactionFilters } from '@/src/components/Transactionfilters';
 import { RegisterTransactionButton } from '@/src/components/RegisterTransactionButton';
 import { StatementModal } from '@/src/components/StatementModal';
+import * as XLSX from 'xlsx'
 
 export default function TransacoesPage() {
   const router = useRouter();
@@ -76,6 +77,46 @@ export default function TransacoesPage() {
       setLoading(false);
     }
   };
+
+  const handleExportData = () => {
+  // 1. Mapeia os dados com os cabeçalhos desejados
+  const dataToExport = filteredTransactions.map((t) => ({
+    Data: formatDate(t.data || t.createdAt),
+    Grupo: getGroupName(t.groupId),
+    Descrição: t.descricao,
+    Tipo: t.type === 'ENTRADA' ? 'Entrada' : 'Saída',
+    Pagamento: t.paymentType || '-',
+    'Valor (R$)': t.valor,
+    'Criado por': t.user?.nome || 'Sistema',
+  }));
+
+  if (dataToExport.length === 0) {
+    alert('Nenhuma transação encontrada para exportar.');
+    return;
+  }
+
+  // 2. Converte os objetos JSON para uma aba (Worksheet) do Excel
+  const worksheet = XLSX.utils.json_to_sheet(dataToExport);
+
+  // 3. Define larguras automáticas/amigáveis para cada coluna
+  worksheet['!cols'] = [
+    { wch: 18 }, // Data
+    { wch: 20 }, // Grupo
+    { wch: 32 }, // Descrição
+    { wch: 12 }, // Tipo
+    { wch: 16 }, // Pagamento
+    { wch: 15 }, // Valor
+    { wch: 22 }, // Criado por
+  ];
+
+  // 4. Cria o arquivo de trabalho (Workbook) e adiciona a aba
+  const workbook = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(workbook, worksheet, 'Transações');
+
+  // 5. Baixa o arquivo nativo em extensão .xlsx
+  const dataAtual = new Date().toISOString().split('T')[0];
+  XLSX.writeFile(workbook, `transacoes_${dataAtual}.xlsx`);
+};
 
   const handleEditTransaction = async (data: any) => {
     if (!selectedTransaction) return;
@@ -172,14 +213,29 @@ export default function TransacoesPage() {
             </div>
           </div>
 
-          <div className="flex gap-2">
+          <div className="flex items-center gap-2">
+            {(user?.role === 'ADMIN' || user?.role === 'SUPER_ADMIN') && (
+              <button
+                onClick={handleExportData}
+                title="Exportar"
+                aria-label="Exportar"
+                className="p-2 bg-white border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors inline-flex items-center justify-center"
+            >
+                <Download className="w-4 h-4" />
+                {/* Exportar */}
+              </button>
+            )}
+
             <button
               onClick={() => setIsStatementModalOpen(true)}
-              className="inline-flex items-center gap-2 px-4 py-2 bg-white border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
+              title="Extrato"
+              aria-label="Extrato"
+              className="p-2 bg-white border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors inline-flex items-center justify-center"
             >
               <FileText className="w-4 h-4" />
-              Extrato
+              {/* Extrato */}
             </button>
+
             {canCreateTransaction && <RegisterTransactionButton />}
           </div>
         </div>

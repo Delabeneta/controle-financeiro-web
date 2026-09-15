@@ -139,7 +139,7 @@ export function StatementModal({
     return { start: null, end: null };
   };
 
-  const filterTransactionsByGroupAndDate = () => {
+  const filterTransactionsByGroupAndDate = (paymentFilter: PaymentFilter) => {
     const { start, end } = getDateRange();
 
     if (!start || !end) {
@@ -154,10 +154,11 @@ export function StatementModal({
     }
 
     const filtered = transactions.filter((t) => {
-      const tDate = new Date(t.data || t.createdAt);
-      const matchesGroup = selectedGroup === 'all' ? true : t.groupId === selectedGroup;
-      return matchesGroup && tDate >= start && tDate <= end;
-    });
+    const tDate = new Date(t.data || t.createdAt);
+    const matchesGroup = selectedGroup === 'all' ? true : t.groupId === selectedGroup;
+    const matchesPayment = paymentFilter === 'all' ? true : t.paymentType === paymentFilter;
+    return matchesGroup && matchesPayment && tDate >= start && tDate <= end;
+  });
 
     const entries = filtered.filter((t) => t.type === 'ENTRADA');
     const expenses = filtered.filter((t) => t.type === 'SAIDA');
@@ -175,14 +176,18 @@ export function StatementModal({
     return { movements, entries, expenses, totalEntradas, totalSaidas, groupTransactionsTotal };
   };
 
-  const calculateSaldoInicial = (): number => {
+  const calculateSaldoInicial =  (paymentFilter: PaymentFilter): number => {
     const { start } = getDateRange();
     if (!start) return 0;
-
+    
     const previousTransactions = transactions.filter((t) => {
       const matchesGroup = selectedGroup === 'all' ? true : t.groupId === selectedGroup;
       if (!matchesGroup) return false;
-      const tDate = new Date(t.data || t.createdAt);
+    
+      const matchesPayment = paymentFilter === 'all' ? true : t.paymentType === paymentFilter;
+      if (!matchesPayment) return false;
+    
+     const tDate = new Date(t.data || t.createdAt);
       return tDate < start;
     });
 
@@ -193,8 +198,8 @@ export function StatementModal({
   };
 
   const { movements, entries, expenses, totalEntradas, totalSaidas, groupTransactionsTotal } =
-    filterTransactionsByGroupAndDate();
-  const saldoInicial = calculateSaldoInicial();
+  filterTransactionsByGroupAndDate(paymentFilter);
+  const saldoInicial = calculateSaldoInicial(paymentFilter);
   const saldoFinal = saldoInicial + groupTransactionsTotal;
 
   const currentDate = new Date().toLocaleDateString('pt-BR', {

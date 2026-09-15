@@ -204,20 +204,7 @@ export function StatementPDF({
     });
   };
 
-  const filteredMovements = movements.filter((m) => {
-    if (paymentFilter === 'all') return true;
-    return m.paymentType === paymentFilter;
-  });
-
-  const filteredTotalEntradas = filteredMovements
-    .filter((m) => m.type === 'ENTRADA')
-    .reduce((sum, m) => sum + m.valor, 0);
-
-  const filteredTotalSaidas = filteredMovements
-    .filter((m) => m.type === 'SAIDA')
-    .reduce((sum, m) => sum + m.valor, 0);
-
-  const ascendingMovements = [...filteredMovements].sort((a, b) => {
+  const ascendingMovements = [...movements].sort((a, b) => {
     const dateA = new Date(a.data || a.createdAt).getTime();
     const dateB = new Date(b.data || b.createdAt).getTime();
     return dateA - dateB;
@@ -232,13 +219,11 @@ export function StatementPDF({
     balanceMap.set(item.id, runningBalance);
   });
 
-  const sortedMovements = [...filteredMovements].sort((a, b) => {
+  const sortedMovements = [...movements].sort((a, b) => {
     const dateA = new Date(a.data || a.createdAt).getTime();
     const dateB = new Date(b.data || b.createdAt).getTime();
     return dateB - dateA;
   });
-
-  const filteredSaldoFinal = saldoInicial + filteredTotalEntradas - filteredTotalSaidas;
 
   const getTypeLabel = (type: string) => {
     return type === 'ENTRADA' ? 'Entrada' : 'Saída';
@@ -253,7 +238,6 @@ export function StatementPDF({
     return map[paymentType] || paymentType;
   };
 
-
   const filterLabel = paymentFilter === 'all'
     ? 'TODAS AS MOVIMENTAÇÕES'
     : paymentFilter === 'PIX'
@@ -263,7 +247,6 @@ export function StatementPDF({
   return (
     <Document>
       <Page size="A4" style={styles.page}>
-        {/* Header */}
         <View style={styles.header}>
           <View style={styles.headerLeft}>
             <Text style={styles.headerTitle}>EXTRATO DE CONTA</Text>
@@ -283,7 +266,6 @@ export function StatementPDF({
           </View>
         </View>
 
-        {/* Resumo */}
         <View style={styles.summarySection}>
           <View style={styles.summaryItem}>
             <Text style={styles.summaryLabel}>Saldo Inicial</Text>
@@ -295,33 +277,32 @@ export function StatementPDF({
           <View style={styles.summaryItem}>
             <Text style={styles.summaryLabel}>Total Entradas</Text>
             <Text style={[styles.summaryValue, { color: '#10b981' }]}>
-              {formatCurrency(filteredTotalEntradas)}
+              {formatCurrency(totalEntradas)}
             </Text>
           </View>
           <View style={styles.summaryDivider} />
           <View style={styles.summaryItem}>
             <Text style={styles.summaryLabel}>Total Saídas</Text>
             <Text style={[styles.summaryValue, { color: '#ef4444' }]}>
-              - {formatCurrency(filteredTotalSaidas)}
+              - {formatCurrency(totalSaidas)}
             </Text>
           </View>
           <View style={styles.summaryDivider} />
           <View style={styles.summaryItem}>
             <Text style={styles.summaryLabel}>Saldo Atual</Text>
-            <Text style={[styles.summaryValue, { color: filteredSaldoFinal >= 0 ? '#10b981' : '#ef4444' }]}>
-              {formatCurrency(filteredSaldoFinal)}
+            <Text style={[styles.summaryValue, { color: saldoFinal >= 0 ? '#10b981' : '#ef4444' }]}>
+              {formatCurrency(saldoFinal)}
             </Text>
           </View>
         </View>
 
-        {/* Tabela de movimentos */}
         <View style={styles.content}>
           <Text style={styles.sectionTitle}>{filterLabel}</Text>
           <View style={styles.tableHeader}>
             <Text style={styles.headerDate}>Data</Text>
             <Text style={styles.headerType}>Tipo</Text>
             <Text style={styles.headerDesc}>Descrição</Text>
-            <Text style={styles.headerId}>ID Operação</Text>
+            <Text style={styles.headerId}>Pagamento</Text>
             <Text style={styles.headerValue}>Valor</Text>
             <Text style={styles.headerBalance}>Saldo</Text>
           </View>
@@ -340,12 +321,8 @@ export function StatementPDF({
                   <Text style={[styles.colType, { color: item.type === 'ENTRADA' ? '#10b981' : '#ef4444' }]}>
                     {getTypeLabel(item.type)}
                   </Text>
-                  <Text style={styles.colDesc}>
-                    {item.descricao}
-                  </Text>
-                  <Text style={styles.colId}>
-                    {getPaymentLabel(item.paymentType)}
-                  </Text>
+                  <Text style={styles.colDesc}>{item.descricao}</Text>
+                  <Text style={styles.colId}>{getPaymentLabel(item.paymentType)}</Text>
                   <Text style={[styles.colValue, { color: item.type === 'ENTRADA' ? '#10b981' : '#ef4444' }]}>
                     {item.type === 'ENTRADA' ? '+' : '-'} {formatCurrency(item.valor)}
                   </Text>
@@ -358,7 +335,6 @@ export function StatementPDF({
           )}
         </View>
 
-        {/* Assinaturas */}
         <View style={styles.signatureSection}>
           <View style={styles.signatureRow}>
             <View style={styles.signatureBox}>
@@ -380,7 +356,6 @@ export function StatementPDF({
           </View>
         </View>
 
-        {/* Rodapé */}
         <View style={styles.footer}>
           <Text>Documento gerado eletronicamente pelo sistema Gestão Financeira</Text>
           <Text style={styles.footerText}>Data de geração: {currentDate}</Text>

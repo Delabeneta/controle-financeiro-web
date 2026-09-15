@@ -2,8 +2,8 @@
 // src/components/StatementModal.tsx
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
-import { X, Calendar, FileText, ChevronDown, AlertCircle } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { X, Calendar, FileText, ChevronDown, AlertCircle, Wallet, Banknote, Layers } from 'lucide-react';
 import { PDFDownloadLink } from '@react-pdf/renderer';
 import { StatementPDF } from './StatementPDF';
 
@@ -19,12 +19,12 @@ interface StatementModalProps {
   selectedGroupId: string;
   treasurerName: string;
   transactions: any[];
-  saldoPix: number;
-  saldoDinheiro: number;
-  saldoTotal: number;
+  bankAccount?: string;
+  agency?: string;
 }
 
 type PeriodType = '15days' | '30days' | 'custom';
+type PaymentFilter = 'all' | 'PIX' | 'DINHEIRO';
 
 export function StatementModal({
   isOpen,
@@ -33,9 +33,8 @@ export function StatementModal({
   selectedGroupId,
   treasurerName,
   transactions,
-  saldoPix,
-  saldoDinheiro,
-  saldoTotal,
+  bankAccount = '',
+  agency = '',
 }: StatementModalProps) {
   const [periodType, setPeriodType] = useState<PeriodType>('30days');
   const [startDate, setStartDate] = useState('');
@@ -43,21 +42,8 @@ export function StatementModal({
   const [selectedGroup, setSelectedGroup] = useState<string>(selectedGroupId);
   const [isGroupOpen, setIsGroupOpen] = useState(false);
   const [dateError, setDateError] = useState('');
-  
-  const prevIsOpenRef = useRef(isOpen);
+  const [paymentFilter, setPaymentFilter] = useState<PaymentFilter>('all');
 
-  useEffect(() => {
-    if (isOpen && !prevIsOpenRef.current) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect
-      setSelectedGroup(selectedGroupId);
-      setStartDate('');
-      setEndDate('');
-      setDateError('');
-      setPeriodType('30days');
-    }
-    prevIsOpenRef.current = isOpen;
-     
-  }, [isOpen, selectedGroupId]);
 
   if (!isOpen) return null;
 
@@ -122,44 +108,51 @@ export function StatementModal({
     }
   };
 
-    const getDateRange = (): { start: Date | null; end: Date | null } => {
-      const today = new Date();
-      today.setHours(23, 59, 59, 999); // final do dia de hoje
+  const getDateRange = (): { start: Date | null; end: Date | null } => {
+    const today = new Date();
+    today.setHours(23, 59, 59, 999);
 
-      if (periodType === '15days') {
-        const start = new Date();
-        start.setDate(start.getDate() - 15);
-        start.setHours(0, 0, 0, 0); // início do dia
-        return { start, end: today };
+    if (periodType === '15days') {
+      const start = new Date();
+      start.setDate(start.getDate() - 15);
+      start.setHours(0, 0, 0, 0);
+      return { start, end: today };
+    }
+
+    if (periodType === '30days') {
+      const start = new Date();
+      start.setDate(start.getDate() - 30);
+      start.setHours(0, 0, 0, 0);
+      return { start, end: today };
+    }
+
+    if (periodType === 'custom' && startDate && endDate) {
+      const [sy, sm, sd] = startDate.split('-').map(Number);
+      const [ey, em, ed] = endDate.split('-').map(Number);
+      const start = new Date(sy, sm - 1, sd, 0, 0, 0, 0);
+      const end = new Date(ey, em - 1, ed, 23, 59, 59, 999);
+      if (!isNaN(start.getTime()) && !isNaN(end.getTime())) {
+        return { start, end };
       }
+    }
 
-      if (periodType === '30days') {
-        const start = new Date();
-        start.setDate(start.getDate() - 30);
-        start.setHours(0, 0, 0, 0);
-        return { start, end: today };
-      }
-
-      if (periodType === 'custom' && startDate && endDate) {
-        const [sy, sm, sd] = startDate.split('-').map(Number);
-        const [ey, em, ed] = endDate.split('-').map(Number);
-        const start = new Date(sy, sm - 1, sd, 0, 0, 0, 0);   // local meia-noite
-        const end = new Date(ey, em - 1, ed, 23, 59, 59, 999); // local fim do dia
-        if (!isNaN(start.getTime()) && !isNaN(end.getTime())) {
-          return { start, end };
-        }
-      }
-
-      return { start: null, end: null };
-    };
+    return { start: null, end: null };
+  };
 
   const filterTransactionsByGroupAndDate = () => {
     const { start, end } = getDateRange();
-    
+
     if (!start || !end) {
-      return { entries: [], expenses: [], groupTransactionsTotal: 0, groupPixTotal: 0, groupDinheiroTotal: 0 };
+      return {
+        movements: [],
+        entries: [],
+        expenses: [],
+        totalEntradas: 0,
+        totalSaidas: 0,
+        groupTransactionsTotal: 0,
+      };
     }
-    
+
     const filtered = transactions.filter((t) => {
       const tDate = new Date(t.data || t.createdAt);
       const matchesGroup = selectedGroup === 'all' ? true : t.groupId === selectedGroup;
@@ -169,49 +162,40 @@ export function StatementModal({
     const entries = filtered.filter((t) => t.type === 'ENTRADA');
     const expenses = filtered.filter((t) => t.type === 'SAIDA');
 
-    const groupTransactionsTotal = filtered.reduce((sum, t) => {
-      return sum + (t.type === 'ENTRADA' ? t.valor : -t.valor);
-    }, 0);
-
-    const groupPixTotal = filtered.reduce((sum, t) => {
-      if (t.paymentType !== 'PIX') return sum;
-      return sum + (t.type === 'ENTRADA' ? t.valor : -t.valor);
-    }, 0);
-
-    const groupDinheiroTotal = filtered.reduce((sum, t) => {
-      if (t.paymentType !== 'DINHEIRO') return sum;
-      return sum + (t.type === 'ENTRADA' ? t.valor : -t.valor);
-    }, 0);
-
-    return { entries, expenses, groupTransactionsTotal, groupPixTotal, groupDinheiroTotal };
-  };
-
-  const getCurrentBalances = () => {
-    const groupTransactions = transactions.filter((t) => {
-      const matchesGroup = selectedGroup === 'all' ? true : t.groupId === selectedGroup;
-      return matchesGroup;
+    const movements = [...filtered].sort((a, b) => {
+      const dateA = new Date(a.data || a.createdAt).getTime();
+      const dateB = new Date(b.data || b.createdAt).getTime();
+      return dateA - dateB;
     });
 
-    const currentTotal = groupTransactions.reduce((sum, t) => {
-      return sum + (t.type === 'ENTRADA' ? t.valor : -t.valor);
-    }, 0);
+    const totalEntradas = entries.reduce((sum, t) => sum + t.valor, 0);
+    const totalSaidas = expenses.reduce((sum, t) => sum + t.valor, 0);
+    const groupTransactionsTotal = totalEntradas - totalSaidas;
 
-    const currentPix = groupTransactions.reduce((sum, t) => {
-      if (t.paymentType !== 'PIX') return sum;
-      return sum + (t.type === 'ENTRADA' ? t.valor : -t.valor);
-    }, 0);
-
-    const currentDinheiro = groupTransactions.reduce((sum, t) => {
-      if (t.paymentType !== 'DINHEIRO') return sum;
-      return sum + (t.type === 'ENTRADA' ? t.valor : -t.valor);
-    }, 0);
-
-    return { currentTotal, currentPix, currentDinheiro };
+    return { movements, entries, expenses, totalEntradas, totalSaidas, groupTransactionsTotal };
   };
-  
-  const { entries, expenses, groupTransactionsTotal, groupPixTotal, groupDinheiroTotal } = filterTransactionsByGroupAndDate();
-  const { currentTotal, currentPix, currentDinheiro } = getCurrentBalances();
-  const { start, end } = getDateRange();
+
+  const calculateSaldoInicial = (): number => {
+    const { start } = getDateRange();
+    if (!start) return 0;
+
+    const previousTransactions = transactions.filter((t) => {
+      const matchesGroup = selectedGroup === 'all' ? true : t.groupId === selectedGroup;
+      if (!matchesGroup) return false;
+      const tDate = new Date(t.data || t.createdAt);
+      return tDate < start;
+    });
+
+    return previousTransactions.reduce(
+      (sum, t) => sum + (t.type === 'ENTRADA' ? t.valor : -t.valor),
+      0
+    );
+  };
+
+  const { movements, entries, expenses, totalEntradas, totalSaidas, groupTransactionsTotal } =
+    filterTransactionsByGroupAndDate();
+  const saldoInicial = calculateSaldoInicial();
+  const saldoFinal = saldoInicial + groupTransactionsTotal;
 
   const currentDate = new Date().toLocaleDateString('pt-BR', {
     day: '2-digit',
@@ -235,22 +219,22 @@ export function StatementModal({
   const getPDFDocument = () => {
     const { start, end } = getDateRange();
     if (!start || !end) return null;
-    
+
     return (
       <StatementPDF
         groupName={getGroupName()}
         treasurerName={treasurerName}
+        bankAccount={bankAccount}
+        agency={agency}
         startDate={start.toISOString()}
         endDate={end.toISOString()}
-        entries={entries}
-        expenses={expenses}
-        saldoPeriodo={groupTransactionsTotal}
-        saldoPixPeriodo={groupPixTotal}
-        saldoDinheiroPeriodo={groupDinheiroTotal}
-        saldoTotalAtual={currentTotal}
-        saldoPixAtual={currentPix}
-        saldoDinheiroAtual={currentDinheiro}
+        movements={movements}
+        saldoInicial={saldoInicial}
+        totalEntradas={totalEntradas}
+        totalSaidas={totalSaidas}
+        saldoFinal={saldoFinal}
         currentDate={currentDate}
+        paymentFilter={paymentFilter}
       />
     );
   };
@@ -279,7 +263,8 @@ export function StatementModal({
           </button>
         </div>
 
-        <div className="p-4 space-y-4">
+        <div className="p-4 space-y-4 max-h-[70vh] overflow-y-auto">
+          {/* Grupo */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
               Grupo
@@ -313,11 +298,51 @@ export function StatementModal({
                 </div>
               )}
             </div>
-            <p className="text-xs text-gray-500 mt-1">
-              {groups.length === 1 ? 'Apenas um grupo disponível' : 'Selecione o grupo para gerar o extrato'}
-            </p>
           </div>
 
+          {/* Tipo de pagamento */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Tipo de movimentação
+            </label>
+            <div className="grid grid-cols-3 gap-2">
+              <button
+                onClick={() => setPaymentFilter('all')}
+                className={`flex items-center justify-center gap-1 px-3 py-2 text-sm rounded-lg transition-colors ${
+                  paymentFilter === 'all'
+                    ? 'bg-primary text-white'
+                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                }`}
+              >
+                <Layers className="w-3.5 h-3.5" />
+                Todos
+              </button>
+              <button
+                onClick={() => setPaymentFilter('PIX')}
+                className={`flex items-center justify-center gap-1 px-3 py-2 text-sm rounded-lg transition-colors ${
+                  paymentFilter === 'PIX'
+                    ? 'bg-primary text-white'
+                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                }`}
+              >
+                <Wallet className="w-3.5 h-3.5" />
+                PIX
+              </button>
+              <button
+                onClick={() => setPaymentFilter('DINHEIRO')}
+                className={`flex items-center justify-center gap-1 px-3 py-2 text-sm rounded-lg transition-colors ${
+                  paymentFilter === 'DINHEIRO'
+                    ? 'bg-primary text-white'
+                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                }`}
+              >
+                <Banknote className="w-3.5 h-3.5" />
+                Dinheiro
+              </button>
+            </div>
+          </div>
+
+          {/* Período */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
               Período
@@ -406,6 +431,7 @@ export function StatementModal({
             </div>
           )}
 
+          {/* Resumo */}
           <div className="bg-gray-50 rounded-lg p-3">
             <div className="flex items-center gap-2 text-sm text-gray-600 mb-2">
               <Calendar className="w-4 h-4" />
@@ -442,7 +468,7 @@ export function StatementModal({
           {isPDFReady ? (
             <PDFDownloadLink
               document={pdfDocument as any}
-              fileName={`extrato_${getGroupName().replace(/\s/g, '_')}_${new Date().toISOString().split('T')[0]}.pdf`}
+              fileName={`extrato_${getGroupName().replace(/\s/g, '_')}_${paymentFilter}_${new Date().toISOString().split('T')[0]}.pdf`}
               className="flex-1"
             >
               {({ loading }) => (

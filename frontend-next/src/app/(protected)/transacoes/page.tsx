@@ -352,16 +352,14 @@ export default function TransacoesPage() {
       )}
 
       <StatementModal
+        key={isStatementModalOpen ? 'open' : 'closed'}
         isOpen={isStatementModalOpen}
         onClose={() => setIsStatementModalOpen(false)}
         groups={groups}
         selectedGroupId={getDefaultGroupId()}
         treasurerName={user?.nome || 'Usuário'}
         transactions={transactions}
-        saldoPix={saldoPix}
-        saldoDinheiro={saldoDinheiro}
-        saldoTotal={saldoTotal}
-      />
+        />
     </div>
   );
 }

@@ -4,7 +4,6 @@ import { useRouter } from 'next/navigation';
 import { useAuth } from '@/src/context/AuthContext';
 import { dashboardApi } from '@/src/lib/api';
 import { StatCard } from '@/src/components/card';
-import { Breadcrumb } from '@/src/components/BreadCrumb';
 import { Wallet, Users, UsersRound, Loader2 } from 'lucide-react';
 import {
   BarChart,
@@ -74,7 +73,6 @@ export default function DashboardPage() {
     <div>
       {/* Header */}
       <div className="mb-6">
-        <Breadcrumb items={[{ label: 'Dashboard' }]} />
 
         <div className="flex flex-col md:flex-row md:items-center justify-between mt-4 gap-4">
           <div>

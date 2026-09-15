@@ -5,7 +5,6 @@ import { useAuth } from '@/src/context/AuthContext';
 import { usersAPI } from '@/src/lib/api';
 import { Card } from '@/src/components/card';
 import { Button } from '@/src/components/ui/button';
-import { Breadcrumb } from '@/src/components/BreadCrumb';
 import { Loader2, Eye, EyeOff } from 'lucide-react';
 
 export default function PerfilPage() {
@@ -81,7 +80,6 @@ export default function PerfilPage() {
   return (
     <div className="max-w-xl">
       <div className="mb-6">
-        <Breadcrumb items={[{ label: 'Perfil' }]} />
         <h1 className="text-2xl md:text-3xl font-bold text-gray-900 mt-4">Meu perfil</h1>
         <p className="text-gray-600 mt-1 text-sm">Gerencie suas informações pessoais</p>
       </div>

@@ -27,6 +27,9 @@ const MESES = [
   'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro',
 ];
 
+const MES_INICIAL = 4; 
+const ANO_INICIAL = 2026;
+
 interface StatusItem {
   groupId: string;
   groupName: string;
@@ -89,6 +92,10 @@ export default function PrestacaoContasPage() {
   }, [loadData]);
 
   const handlePrevMonth = () => {
+
+    // nao volta, antes do meu limite
+    if (ano === ANO_INICIAL && mes === MES_INICIAL) return;
+
     if (mes === 1) {
       setMes(12);
       setAno((a) => a - 1);
@@ -98,6 +105,14 @@ export default function PrestacaoContasPage() {
   };
 
   const handleNextMonth = () => {
+
+    // Não permite avançar além do mês atual
+     const hoje = new Date();
+     const mesAtual = hoje.getMonth() + 2;
+     const anoAtual = hoje.getFullYear();
+
+    if (ano === anoAtual && mes === mesAtual) return;
+    
     if (mes === 12) {
       setMes(1);
       setAno((a) => a + 1);
@@ -138,7 +153,6 @@ export default function PrestacaoContasPage() {
   return (
     <div>
       <div className="mb-6">
-        <Breadcrumb items={[{ label: 'Prestação de Contas' }]} />
         <div className="mt-4">
           <h1 className="text-2xl md:text-3xl font-bold text-gray-900">Prestação de Contas</h1>
           <p className="text-gray-600 mt-1 text-sm md:text-base">

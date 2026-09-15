@@ -7,7 +7,6 @@ import { useAuth } from '@/src/context/AuthContext';
 import { usersAPI, groupsAPI, userGroupsAPI, adminAPI } from '@/src/lib/api';
 import { Card } from '@/src/components/card';
 import { Button } from '@/src/components/ui/button';
-import { Breadcrumb } from '@/src/components/BreadCrumb';
 import { 
   Plus, 
   UserCircle, 
@@ -394,7 +393,6 @@ export default function UsuariosPage() {
     <div>
       {/* Header */}
       <div className="mb-6">
-        <Breadcrumb items={[{ label: 'Usuários' }]} />
         <div className="flex flex-col sm:flex-row sm:items-center justify-between mt-4 gap-4">
           <div>
             <h1 className="text-2xl md:text-3xl font-bold text-gray-900">Usuários</h1>

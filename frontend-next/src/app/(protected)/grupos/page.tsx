@@ -8,9 +8,7 @@ import { useAuth } from '@/src/context/AuthContext';
 import { usersAPI, groupsAPI, adminAPI } from '@/src/lib/api';
 import { Card } from '@/src/components/card';
 import { Button } from '@/src/components/ui/button';
-import { Breadcrumb } from '@/src/components/BreadCrumb';
 import { Plus, Users, Edit, Loader2, X } from 'lucide-react';
-import { EditGroupModal } from '@/src/components/EditGroupModal';
 
 function CreateGroupModal({ 
   isOpen, 
@@ -228,7 +226,6 @@ const handleCreateGroup = async (data: any) => {
   return (
     <div>
       <div className="mb-6">
-        <Breadcrumb items={[{ label: 'Grupos' }]} />
         <div className="flex flex-col sm:flex-row sm:items-center justify-between mt-4 gap-4">
           <div>
             <h1 className="text-2xl md:text-3xl font-bold text-gray-900">Grupos</h1>

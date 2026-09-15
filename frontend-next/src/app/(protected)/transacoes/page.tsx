@@ -7,7 +7,6 @@ import { useRouter } from 'next/navigation';
 import { useAuth } from '@/src/context/AuthContext';
 import { transactionsAPI, usersAPI, groupsAPI } from '@/src/lib/api';
 import { Card } from '@/src/components/card';
-import { Breadcrumb } from '@/src/components/BreadCrumb';
 import { Loader2, FileText, Download } from 'lucide-react';
 import { ResponsiveTable } from '@/src/components/ResponsiveTable';
 import { EditTransactionModal } from '@/src/components/EditTransactionModal';
@@ -204,7 +203,6 @@ export default function TransacoesPage() {
       <div className="mb-6">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
-            <Breadcrumb items={[{ label: 'Transações' }]} />
             <div className="mt-4">
               <h1 className="text-2xl md:text-3xl font-bold text-gray-900">Transações</h1>
               <p className="text-gray-600 mt-1 text-sm md:text-base">

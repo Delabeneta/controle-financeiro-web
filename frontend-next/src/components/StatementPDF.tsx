@@ -375,7 +375,7 @@ export function StatementPDF({
 
           <View style={styles.signatureCenter}>
             <View style={styles.signatureCenterLine} />
-            <Text style={styles.signatureTitle}>Padre Responsável</Text>
+            <Text style={styles.signatureTitle}>Secretaria Paroquial</Text>
             <Text style={styles.signatureRole}>Assinatura e Carimbo da Paróquia</Text>
           </View>
         </View>

@@ -9,6 +9,7 @@ import { Edit2, X } from 'lucide-react';
 interface Column {
   key: string;
   header: string;
+  width?: string;
   render?: (value: any, item: any) => React.ReactNode;
 }
 
@@ -33,7 +34,7 @@ export function ResponsiveTable({ columns, data, onRowClick, onEdit, canEdit}: R
 
 
   const displayColumns = canEdit 
-    ? [...columns, { key: 'acoes', header: 'Ações', render: (value: any, item: any) => (
+    ? [...columns, { key: 'acoes', header: 'Ações', width: '64px', render: (value: any, item: any) => (
         <button
           onClick={(e) => {
             e.stopPropagation();
@@ -49,7 +50,6 @@ export function ResponsiveTable({ columns, data, onRowClick, onEdit, canEdit}: R
     const formatDateTime = (dateString: string) => {
       if (!dateString) return '';
       const date = new Date(dateString);
-      // Ajustar para o fuso de São Paulo
       return date.toLocaleString('pt-BR', {
         timeZone: 'America/Sao_Paulo',
         day: '2-digit',
@@ -81,34 +81,40 @@ export function ResponsiveTable({ columns, data, onRowClick, onEdit, canEdit}: R
     <>
       {/* Desktop Table */}
       <div className="hidden md:block bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead className="bg-gray-50">
-              <tr>
+        <table className="w-full table-fixed">
+          <thead className="bg-gray-50">
+            <tr>
+              {displayColumns.map((col) => (
+                <th
+                  key={col.key}
+                  style={col.width ? { width: col.width } : undefined}
+                  className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                >
+                  {col.header}
+                </th>
+              ))}
+            </tr>
+          </thead>
+          <tbody className="bg-white divide-y divide-gray-200">
+            {data.map((item) => (
+              <tr
+                key={item.id}
+                onClick={() => handleCardClick(item)}
+                className={`${onRowClick ? 'cursor-pointer hover:bg-gray-50' : ''} transition-colors`}
+              >
                 {displayColumns.map((col) => (
-                  <th key={col.key} className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    {col.header}
-                  </th>
+                  <td
+                    key={col.key}
+                    style={col.width ? { width: col.width } : undefined}
+                    className="px-3 py-3 text-sm overflow-hidden text-ellipsis whitespace-nowrap"
+                  >
+                    {col.render ? col.render(item[col.key], item) : item[col.key]}
+                  </td>
                 ))}
               </tr>
-            </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
-              {data.map((item) => (
-                <tr
-                  key={item.id}
-                  onClick={() => handleCardClick(item)}
-                  className={`${onRowClick ? 'cursor-pointer hover:bg-gray-50' : ''} transition-colors`}
-                >
-                  {displayColumns.map((col) => (
-                    <td key={col.key} className="px-6 py-4 whitespace-nowrap">
-                      {col.render ? col.render(item[col.key], item) : item[col.key]}
-                    </td>
-                  ))}
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+            ))}
+          </tbody>
+        </table>
       </div>
 
       {/* Mobile Cards */}

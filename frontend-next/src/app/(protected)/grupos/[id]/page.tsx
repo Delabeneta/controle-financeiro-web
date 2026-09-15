@@ -114,6 +114,7 @@ export default function GrupoDetailPage() {
             valor: data.valor,
             paymentType: data.paymentType,
             tipo: data.tipo,
+            data: data.data,
           });
           await loadData();
           setIsEditModalOpen(false);

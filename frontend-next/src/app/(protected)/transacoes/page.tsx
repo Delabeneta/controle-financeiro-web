@@ -265,35 +265,33 @@ export default function TransacoesPage() {
           {
             key: 'data',
             header: 'Data',
-            render: (value, item) => formatDate(item.data || item.createdAt),
+            width: '110px',
+            render: (value, item) => (
+              <span className="whitespace-nowrap">{formatDate(item.data || item.createdAt)}</span>
+            ),
           },
           {
             key: 'grupo',
             header: 'Grupo',
-            render: (value, item) => getGroupName(item.groupId),
-          },
-          { key: 'descricao', header: 'Descrição' },
-          {
-            key: 'type',
-            header: 'Tipo',
+            width: '14%',
             render: (value, item) => (
-              <span
-                className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium ${
-                  item.type === 'ENTRADA' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
-                }`}
-              >
-                {item.type === 'ENTRADA' ? (
-                  <ArrowUpCircle className="w-3 h-3" />
-                ) : (
-                  <ArrowDownCircle className="w-3 h-3" />
-                )}
-                {item.type === 'ENTRADA' ? 'Entrada' : 'Saída'}
+              <span className="block truncate">{getGroupName(item.groupId)}</span>
+            ),
+          },
+          {
+            key: 'descricao',
+            header: 'Descrição',
+            width: '28%',
+            render: (value, item) => (
+              <span className="block truncate" title={item.descricao}>
+                {item.descricao}
               </span>
             ),
           },
           {
             key: 'paymentType',
             header: 'Pagamento',
+            width: '110px',
             render: (value, item) => {
               const map: Record<string, string> = {
                 PIX: 'PIX',
@@ -308,8 +306,14 @@ export default function TransacoesPage() {
           {
             key: 'valor',
             header: 'Valor',
+            width: '130px',
             render: (value, item) => (
-              <span className={`font-semibold ${item.type === 'ENTRADA' ? 'text-success' : 'text-danger'}`}>
+              <span className={`inline-flex items-center gap-1 font-semibold whitespace-nowrap ${item.type === 'ENTRADA' ? 'text-success' : 'text-danger'}`}>
+                {item.type === 'ENTRADA' ? (
+                  <ArrowUpCircle className="w-3.5 h-3.5 flex-shrink-0" />
+                ) : (
+                  <ArrowDownCircle className="w-3.5 h-3.5 flex-shrink-0" />
+                )}
                 {item.type === 'ENTRADA' ? '+' : '-'} {formatCurrency(item.valor)}
               </span>
             ),
@@ -317,7 +321,10 @@ export default function TransacoesPage() {
           {
             key: 'user',
             header: 'Criado por',
-            render: (value, item) => item.user?.nome || 'Sistema',
+            width: '14%',
+            render: (value, item) => (
+              <span className="block truncate">{item.user?.nome || 'Sistema'}</span>
+            ),
           },
         ]}
         data={filteredTransactions}
@@ -337,14 +344,14 @@ export default function TransacoesPage() {
           }}
           transaction={{
             id: selectedTransaction.id,
-            nome: selectedTransaction.descricao,
             descricao: selectedTransaction.descricao,
             tipo: selectedTransaction.type,
             paymentType: selectedTransaction.paymentType || 'PIX',
             valor: selectedTransaction.valor,
             data: selectedTransaction.data || selectedTransaction.createdAt,
             createdBy: selectedTransaction.user?.nome || 'Sistema',
-            categoria: 'Outro',
+            updatedByName: selectedTransaction.updatedByUser?.nome || null,
+            updatedAt: selectedTransaction.updatedAt || null,
             groupName: getGroupName(selectedTransaction.groupId),
           }}
           onSave={handleEditTransaction}
@@ -358,7 +365,6 @@ export default function TransacoesPage() {
         groups={groups}
         selectedGroupId={getDefaultGroupId()}
         treasurerName={user?.nome || 'Usuário'}
-        transactions={transactions}
         />
     </div>
   );

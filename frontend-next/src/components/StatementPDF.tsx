@@ -14,7 +14,7 @@ Font.register({
 const styles = StyleSheet.create({
   page: {
     padding: 30,
-    fontSize: 8,
+    fontSize: 10,
     fontFamily: 'Helvetica',
     backgroundColor: '#ffffff',
     position: 'relative',
@@ -29,14 +29,14 @@ const styles = StyleSheet.create({
   },
   headerLeft: { flex: 1 },
   headerRight: { flex: 1, textAlign: 'right' },
-  headerTitle: { fontSize: 14, fontWeight: 'bold', color: '#1a1a1a' },
-  headerSubtitle: { fontSize: 10, color: '#666666', marginTop: 2 },
-  headerDetail: { fontSize: 8, color: '#555555', marginTop: 2 },
+  headerTitle: { fontSize: 16, fontWeight: 'bold', color: '#1a1a1a' },
+  headerSubtitle: { fontSize: 12, color: '#666666', marginTop: 2 },
+  headerDetail: { fontSize: 10, color: '#555555', marginTop: 3 },
 
   summarySection: {
     marginTop: 8,
     marginBottom: 12,
-    padding: 8,
+    padding: 10,
     borderWidth: 1,
     borderColor: '#cccccc',
     borderStyle: 'dashed',
@@ -46,15 +46,15 @@ const styles = StyleSheet.create({
   },
   summaryItem: { flex: 1, textAlign: 'center' },
   summaryLabel: {
-    fontSize: 7,
+    fontSize: 8,
     color: '#666666',
     textTransform: 'uppercase',
     letterSpacing: 0.5,
   },
   summaryValue: {
-    fontSize: 11,
+    fontSize: 13,
     fontWeight: 'bold',
-    marginTop: 3,
+    marginTop: 4,
   },
   summaryDivider: {
     width: 1,
@@ -62,10 +62,10 @@ const styles = StyleSheet.create({
   },
 
   sectionTitle: {
-    fontSize: 9,
+    fontSize: 11,
     fontWeight: 'bold',
-    marginTop: 8,
-    marginBottom: 4,
+    marginTop: 10,
+    marginBottom: 5,
     textTransform: 'uppercase',
     color: '#333333',
     letterSpacing: 0.5,
@@ -74,75 +74,75 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     borderBottomWidth: 1,
     borderBottomColor: '#333333',
-    paddingVertical: 5,
+    paddingVertical: 6,
     marginTop: 2,
   },
   tableRow: {
     flexDirection: 'row',
     borderBottomWidth: 0.5,
     borderBottomColor: '#eeeeee',
-    paddingVertical: 3,
+    paddingVertical: 5,
   },
 
-  colDate: { width: '12%', fontSize: 7 },
-  colType: { width: '10%', fontSize: 7 },
-  colDesc: { width: '35%', fontSize: 7 },
-  colId: { width: '13%', fontSize: 7 },
-  colValue: { width: '15%', fontSize: 7, textAlign: 'right' },
-  colBalance: { width: '15%', fontSize: 7, textAlign: 'right' },
+  colDate: { width: '12%', fontSize: 9 },
+  colType: { width: '10%', fontSize: 9 },
+  colDesc: { width: '33%', fontSize: 9 },
+  colPayment: { width: '15%', fontSize: 9 },
+  colValue: { width: '15%', fontSize: 9, textAlign: 'right' },
+  colBalance: { width: '15%', fontSize: 9, textAlign: 'right' },
 
-  headerDate: { width: '12%', fontSize: 7, fontWeight: 'bold' },
-  headerType: { width: '10%', fontSize: 7, fontWeight: 'bold' },
-  headerDesc: { width: '35%', fontSize: 7, fontWeight: 'bold' },
-  headerId: { width: '13%', fontSize: 7, fontWeight: 'bold' },
-  headerValue: { width: '15%', fontSize: 7, fontWeight: 'bold', textAlign: 'right' },
-  headerBalance: { width: '15%', fontSize: 7, fontWeight: 'bold', textAlign: 'right' },
+  headerDate: { width: '12%', fontSize: 9, fontWeight: 'bold' },
+  headerType: { width: '10%', fontSize: 9, fontWeight: 'bold' },
+  headerDesc: { width: '33%', fontSize: 9, fontWeight: 'bold' },
+  headerPayment: { width: '15%', fontSize: 9, fontWeight: 'bold' },
+  headerValue: { width: '15%', fontSize: 9, fontWeight: 'bold', textAlign: 'right' },
+  headerBalance: { width: '15%', fontSize: 9, fontWeight: 'bold', textAlign: 'right' },
 
   content: {
     flex: 1,
-    marginBottom: 120,
+    marginBottom: 140,
   },
 
   signatureSection: {
     position: 'absolute',
-    bottom: 60,
+    bottom: 70,
     left: 30,
     right: 30,
   },
   signatureRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginBottom: 20,
+    marginBottom: 25,
   },
   signatureBox: { width: '45%', textAlign: 'center' },
   signatureLine: {
     borderBottomWidth: 1,
     borderBottomColor: '#000000',
-    marginBottom: 4,
+    marginBottom: 5,
     marginTop: 0,
   },
-  signatureTitle: { fontSize: 8, fontWeight: 'bold', marginBottom: 2 },
-  signatureRole: { fontSize: 7, color: '#666666' },
+  signatureTitle: { fontSize: 9, fontWeight: 'bold', marginBottom: 3 },
+  signatureRole: { fontSize: 8, color: '#666666' },
   signatureCenter: { alignItems: 'center', marginTop: 0 },
   signatureCenterLine: {
     borderBottomWidth: 1,
     borderBottomColor: '#000000',
     width: '50%',
-    marginBottom: 4,
+    marginBottom: 5,
   },
   footer: {
     position: 'absolute',
-    bottom: 30,
+    bottom: 35,
     left: 30,
     right: 30,
     textAlign: 'center',
-    fontSize: 6,
+    fontSize: 8,
     color: '#999999',
     borderTopWidth: 1,
     borderTopColor: '#eeeeee',
-    paddingTop: 6,
+    paddingTop: 8,
   },
-  footerText: { fontSize: 6, color: '#999999', marginTop: 2 },
+  footerText: { fontSize: 8, color: '#999999', marginTop: 3 },
 });
 
 interface Movement {
@@ -235,7 +235,7 @@ export function StatementPDF({
       DINHEIRO: 'Dinheiro',
       TRANSFERENCIA: 'Transferência',
     };
-    return map[paymentType] || paymentType;
+    return map[paymentType?.toUpperCase()] || paymentType;
   };
 
   const filterLabel = paymentFilter === 'all'
@@ -302,7 +302,7 @@ export function StatementPDF({
             <Text style={styles.headerDate}>Data</Text>
             <Text style={styles.headerType}>Tipo</Text>
             <Text style={styles.headerDesc}>Descrição</Text>
-            <Text style={styles.headerId}>Pagamento</Text>
+            <Text style={styles.headerPayment}>Pagamento</Text>
             <Text style={styles.headerValue}>Valor</Text>
             <Text style={styles.headerBalance}>Saldo</Text>
           </View>
@@ -322,7 +322,7 @@ export function StatementPDF({
                     {getTypeLabel(item.type)}
                   </Text>
                   <Text style={styles.colDesc}>{item.descricao}</Text>
-                  <Text style={styles.colId}>{getPaymentLabel(item.paymentType)}</Text>
+                  <Text style={styles.colPayment}>{getPaymentLabel(item.paymentType)}</Text>
                   <Text style={[styles.colValue, { color: item.type === 'ENTRADA' ? '#10b981' : '#ef4444' }]}>
                     {item.type === 'ENTRADA' ? '+' : '-'} {formatCurrency(item.valor)}
                   </Text>

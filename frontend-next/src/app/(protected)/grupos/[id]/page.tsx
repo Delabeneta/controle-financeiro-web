@@ -309,14 +309,14 @@ export default function GrupoDetailPage() {
               }}
               transaction={{
                 id: selectedTransaction.id,
-                nome: selectedTransaction.descricao,
                 descricao: selectedTransaction.descricao,
                 tipo: selectedTransaction.type,
                 paymentType: selectedTransaction.paymentType || 'PIX',
                 valor: selectedTransaction.valor,
                 data: selectedTransaction.data || selectedTransaction.createdAt,
                 createdBy: selectedTransaction.user?.nome || 'Sistema',
-                categoria: 'Outro',
+                updatedByName: selectedTransaction.updatedByUser?.nome || null,
+                updatedAt: selectedTransaction.updatedAt || null,
                 groupName: group.nome,
               }}
               onSave={handleEditTransaction}

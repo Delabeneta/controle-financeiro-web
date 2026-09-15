@@ -8,7 +8,7 @@ import { useAuth } from '@/src/context/AuthContext';
 import { transactionsAPI, usersAPI, groupsAPI } from '@/src/lib/api';
 import { Card } from '@/src/components/card';
 import { Breadcrumb } from '@/src/components/BreadCrumb';
-import { ArrowUpCircle, ArrowDownCircle, Loader2, FileText, Download } from 'lucide-react';
+import { Loader2, FileText, Download } from 'lucide-react';
 import { ResponsiveTable } from '@/src/components/ResponsiveTable';
 import { EditTransactionModal } from '@/src/components/EditTransactionModal';
 import { SaldoCards } from '@/src/components/Saldocards'; 
@@ -265,7 +265,7 @@ export default function TransacoesPage() {
           {
             key: 'data',
             header: 'Data',
-            width: '110px',
+            width: '150px',
             render: (value, item) => (
               <span className="whitespace-nowrap">{formatDate(item.data || item.createdAt)}</span>
             ),
@@ -273,7 +273,7 @@ export default function TransacoesPage() {
           {
             key: 'grupo',
             header: 'Grupo',
-            width: '14%',
+            width: '11%',
             render: (value, item) => (
               <span className="block truncate">{getGroupName(item.groupId)}</span>
             ),
@@ -309,11 +309,7 @@ export default function TransacoesPage() {
             width: '130px',
             render: (value, item) => (
               <span className={`inline-flex items-center gap-1 font-semibold whitespace-nowrap ${item.type === 'ENTRADA' ? 'text-success' : 'text-danger'}`}>
-                {item.type === 'ENTRADA' ? (
-                  <ArrowUpCircle className="w-3.5 h-3.5 flex-shrink-0" />
-                ) : (
-                  <ArrowDownCircle className="w-3.5 h-3.5 flex-shrink-0" />
-                )}
+              
                 {item.type === 'ENTRADA' ? '+' : '-'} {formatCurrency(item.valor)}
               </span>
             ),

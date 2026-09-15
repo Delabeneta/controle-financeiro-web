@@ -127,7 +127,6 @@ export class TransactionsService {
   }
 
   // ─── EDITAR TRANSAÇÃO ─────────────────────────────────────────────────────────
-  // Recebe o User completo — sem query extra ao banco
   async update(id: string, data: UpdateTransactionDto, user: User) {
     const transaction = await this.prisma.transaction.findUnique({
       where: { id },
@@ -193,7 +192,6 @@ export class TransactionsService {
   }
 
   // ─── DELETAR TRANSAÇÃO ────────────────────────────────────────────────────────
-  // Recebe o User completo — sem query extra ao banco
   async delete(id: string, user: User) {
     const transaction = await this.prisma.transaction.findUnique({
       where: { id },
@@ -340,6 +338,105 @@ export class TransactionsService {
     return {
       transactions: transactions.map((t) => ({ ...t, valor: Number(t.valor) })),
       totals,
+    };
+  }
+
+  // ─── EXTRATO / RELATÓRIO POR PERÍODO ──────────────────────────────────────────
+  async getStatement(
+    params: {
+      groupId: string;
+      startDate: string;
+      endDate: string;
+      paymentType?: PaymentType;
+    },
+    user: User,
+  ) {
+    const { groupId, startDate, endDate, paymentType } = params;
+
+    if (!groupId) throw new BadRequestException('groupId é obrigatório');
+    if (!startDate || !endDate) {
+      throw new BadRequestException('startDate e endDate são obrigatórios');
+    }
+
+    const group = await this.prisma.group.findUnique({
+      where: { id: groupId },
+    });
+    if (!group) throw new NotFoundException('Grupo não encontrado');
+
+    // Escopo por role — mesmo padrão usado em findByGroup/update/delete
+    if (user.role === Role.ADMIN) {
+      if (group.organizationId !== user.organizationId) {
+        throw new ForbiddenException(
+          'Este grupo não pertence à sua organização',
+        );
+      }
+    }
+
+    if (user.role === Role.LIDER) {
+      const userGroup = await this.prisma.userGroup.findUnique({
+        where: { userId_groupId: { userId: user.id, groupId } },
+      });
+      if (!userGroup)
+        throw new ForbiddenException('Você não pertence a este grupo');
+    }
+
+    const start = new Date(startDate);
+    const end = new Date(endDate);
+
+    if (isNaN(start.getTime()) || isNaN(end.getTime())) {
+      throw new BadRequestException('Datas inválidas');
+    }
+
+    const paymentWhere = paymentType ? { paymentType } : {};
+
+    // ─── SALDO INICIAL: soma de tudo antes do início do período ────────────────
+    const previousTransactions = await this.prisma.transaction.findMany({
+      where: {
+        groupId,
+        data: { lt: start },
+        ...paymentWhere,
+      },
+      select: { type: true, valor: true },
+    });
+
+    const saldoInicial = previousTransactions.reduce((acc, t) => {
+      const valor = Number(t.valor);
+      return acc + (t.type === 'ENTRADA' ? valor : -valor);
+    }, 0);
+
+    // ─── MOVIMENTAÇÕES DENTRO DO PERÍODO ────────────────────────────────────────
+    const movements = await this.prisma.transaction.findMany({
+      where: {
+        groupId,
+        data: { gte: start, lte: end },
+        ...paymentWhere,
+      },
+      include: {
+        user: { select: { id: true, nome: true } },
+      },
+      orderBy: { data: 'asc' },
+    });
+
+    let totalEntradas = 0;
+    let totalSaidas = 0;
+
+    for (const t of movements) {
+      const valor = Number(t.valor);
+      if (t.type === 'ENTRADA') totalEntradas += valor;
+      else totalSaidas += valor;
+    }
+
+    const saldoFinal = saldoInicial + totalEntradas - totalSaidas;
+
+    return {
+      groupName: group.nome,
+      movements: movements.map((m) => ({ ...m, valor: Number(m.valor) })),
+      saldoInicial,
+      totalEntradas,
+      totalSaidas,
+      saldoFinal,
+      startDate,
+      endDate,
     };
   }
 

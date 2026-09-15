@@ -63,6 +63,21 @@ export class TransactionsController {
     return this.transactionsService.findByGroup(groupId, type, req.user);
   }
 
+  // ─── EXTRATO / RELATÓRIO POR PERÍODO ──────────────────────────────────────────
+  @Get('extrato')
+  getStatement(
+    @Req() req: RequestWithUser,
+    @Query('groupId') groupId: string,
+    @Query('startDate') startDate: string,
+    @Query('endDate') endDate: string,
+    @Query('paymentType') paymentType?: 'PIX' | 'DINHEIRO',
+  ) {
+    return this.transactionsService.getStatement(
+      { groupId, startDate, endDate, paymentType },
+      req.user,
+    );
+  }
+
   // ─── BUSCAR UMA TRANSAÇÃO ─────────────────────────────────────────────────────
   @Get(':id')
   findOne(@Param('id') id: string, @Req() req: RequestWithUser) {

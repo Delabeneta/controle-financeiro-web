@@ -55,3 +55,9 @@ yarn-error.log
 *.log
 *.cache
 .vercel
+
+# Backups do banco de dados
+backup-*.dump
+backup-*.sql
+backup_*.dump
+backup_*.sql

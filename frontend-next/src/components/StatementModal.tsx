@@ -365,7 +365,7 @@ export function StatementModal({
                     : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                 }`}
               >
-                15 dias
+                1a5 dias
               </button>
               <button
                 onClick={() => {
@@ -441,7 +441,7 @@ export function StatementModal({
           <div className="bg-gray-50 rounded-lg p-3">
             <div className="flex items-center gap-2 text-sm text-gray-600 mb-2">
               <Calendar className="w-4 h-4" />
-              <span>Resumo do período</span>
+              <span>Resumo doa período</span>
             </div>
 
             {isLoadingStatement ? (

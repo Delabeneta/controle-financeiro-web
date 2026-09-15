@@ -2,7 +2,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Banknote, CreditCard, Calendar, X } from 'lucide-react';
+import { Banknote, CreditCard, Calendar, Clock, X } from 'lucide-react';
 import { Button } from './ui/button'; 
 
 interface EditTransactionModalProps {
@@ -10,52 +10,55 @@ interface EditTransactionModalProps {
   onClose: () => void;
   transaction: {
     id: string;
-    nome: string;
     descricao: string;
     tipo: 'ENTRADA' | 'SAIDA';
     paymentType: string;
     valor: number;
     data: string;
     createdBy: string;
-    categoria: string;
+    updatedByName?: string | null;
+    updatedAt?: string | null;
     groupName: string;
   };
   onSave: (data: unknown) => void;
 }
 
 export function EditTransactionModal({ isOpen, onClose, transaction, onSave }: EditTransactionModalProps) {
-  // Formatar a data para YYYY-MM-DD (para o input date)
   const formatDateForInput = (dateString: string) => {
     const date = new Date(dateString);
-    return date.toISOString().split('T')[0];
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  };
+
+  const formatTimeForInput = (dateString: string) => {
+    const date = new Date(dateString);
+    const hours = String(date.getHours()).padStart(2, '0');
+    const minutes = String(date.getMinutes()).padStart(2, '0');
+    return `${hours}:${minutes}`;
   };
 
   const [formData, setFormData] = useState({
-    nome: transaction.nome,
     descricao: transaction.descricao,
     valor: transaction.valor,
-    categoria: transaction.categoria,
     tipo: transaction.tipo,
     paymentType: transaction.paymentType,
     data: formatDateForInput(transaction.data),
+    hora: formatTimeForInput(transaction.data),
   });
   const [loading, setLoading] = useState(false);
 
   if (!isOpen) return null;
 
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('pt-BR', {
+  const formatDateTime = (dateString: string) => {
+    return new Date(dateString).toLocaleString('pt-BR', {
       day: '2-digit',
       month: 'short',
       year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
     });
-  };
-
-  const formatCurrency = (value: number) => {
-    return new Intl.NumberFormat('pt-BR', {
-      style: 'currency',
-      currency: 'BRL',
-    }).format(value);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -66,10 +69,14 @@ export function EditTransactionModal({ isOpen, onClose, transaction, onSave }: E
     let dataEnvio: Date | undefined;
     if (formData.data) {
       const [year, month, day] = formData.data.split('-').map(Number);
-      dataEnvio = new Date(year, month - 1, day, 12, 0, 0, 0);
+      const [hour, minute] = (formData.hora || '12:00').split(':').map(Number);
+      dataEnvio = new Date(year, month - 1, day, hour, minute, 0, 0);
     }
       await onSave({
-        ...formData,
+        descricao: formData.descricao,
+        valor: formData.valor,
+        tipo: formData.tipo,
+        paymentType: formData.paymentType,
         data: dataEnvio ? dataEnvio.toISOString() : undefined,
       });
       onClose();
@@ -85,40 +92,34 @@ export function EditTransactionModal({ isOpen, onClose, transaction, onSave }: E
       <div className="bg-white rounded-xl shadow-xl w-full max-w-md max-h-[90vh] overflow-y-auto">
         {/* Header */}
         <div className="flex items-center justify-between p-4 border-b">
-          <h2 className="text-lg font-semibold text-gray-900">{transaction.nome}</h2>
+          <h2 className="text-lg font-semibold text-gray-900">Editar transação</h2>
           <button onClick={onClose} className="p-1 hover:bg-gray-100 rounded-lg transition-colors">
             <X className="w-5 h-5" />
           </button>
         </div>
 
-        {/* Informações fixas (não editáveis) */}
-        <div className="p-4 space-y-3 bg-gray-50 border-b">
+        {/* Informações fixas (não editáveis) — histórico de quem criou/editou */}
+        <div className="p-4 space-y-2 bg-gray-50 border-b text-sm">
           <div className="flex items-center justify-between">
-            <span className="text-sm text-gray-600">Registrado por</span>
-            <span className="text-sm text-gray-900">{transaction.createdBy}</span>
+            <span className="text-gray-600">Grupo</span>
+            <span className="text-gray-900">{transaction.groupName}</span>
           </div>
           <div className="flex items-center justify-between">
-            <span className="text-sm text-gray-600">Grupo</span>
-            <span className="text-sm text-gray-900">{transaction.groupName}</span>
+            <span className="text-gray-600">Registrado por</span>
+            <span className="text-gray-900">{transaction.createdBy}</span>
           </div>
+          {transaction.updatedByName && transaction.updatedAt && (
+            <div className="flex items-center justify-between">
+              <span className="text-gray-600">Última edição</span>
+              <span className="text-gray-900">
+                {transaction.updatedByName} em {formatDateTime(transaction.updatedAt)}
+              </span>
+            </div>
+          )}
         </div>
 
         {/* Formulário editável */}
         <form onSubmit={handleSubmit} className="p-4 space-y-4">
-          {/* Nome do registro */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Nome do registro
-            </label>
-            <input
-              type="text"
-              value={formData.nome}
-              onChange={(e) => setFormData({ ...formData, nome: e.target.value })}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
-              required
-            />
-          </div>
-
           {/* Descrição */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -128,26 +129,44 @@ export function EditTransactionModal({ isOpen, onClose, transaction, onSave }: E
               value={formData.descricao}
               onChange={(e) => setFormData({ ...formData, descricao: e.target.value })}
               rows={3}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary resize-none"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
             />
           </div>
 
-          {/* Data - EDITÁVEL (apenas data, sem horário) */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Data *
-            </label>
-            <div className="relative">
-              <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-              <input
-                type="date"
-                value={formData.data}
-                onChange={(e) => setFormData({ ...formData, data: e.target.value })}
-                className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
-                required
-              />
+          {/* Data e Hora — EDITÁVEIS */}
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Data *
+              </label>
+              <div className="relative">
+                <input
+                  type="date"
+                  value={formData.data}
+                  onChange={(e) => setFormData({ ...formData, data: e.target.value })}
+                  className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
+                  required
+                />
+              </div>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Horário *
+              </label>
+              <div className="relative">
+                <input
+                  type="time"
+                  value={formData.hora}
+                  onChange={(e) => setFormData({ ...formData, hora: e.target.value })}
+                  className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
+                  required
+                />
+              </div>
             </div>
           </div>
+          <p className="text-xs text-gray-500 -mt-2">
+            Ajustar o horário reordena a transação na listagem e no extrato.
+          </p>
 
           {/* Tipo (ENTRADA/SAÍDA) */}
           <div>
@@ -262,24 +281,6 @@ export function EditTransactionModal({ isOpen, onClose, transaction, onSave }: E
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
               required
             />
-          </div>
-
-          {/* Categoria */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Categoria
-            </label>
-            <select
-              value={formData.categoria}
-              onChange={(e) => setFormData({ ...formData, categoria: e.target.value })}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
-            >
-              <option value="Culto">Culto</option>
-              <option value="Evento">Evento</option>
-              <option value="Doação">Doação</option>
-              <option value="Despesa">Despesa</option>
-              <option value="Outro">Outro</option>
-            </select>
           </div>
 
           {/* Botões */}

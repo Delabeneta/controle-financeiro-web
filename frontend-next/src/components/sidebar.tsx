@@ -15,6 +15,7 @@ import {
   Menu,
   X,
   CreditCard,
+  ClipboardCheck,
 } from 'lucide-react';
 
 export function Sidebar() {
@@ -62,6 +63,12 @@ export function Sidebar() {
       path: '/transacoes', 
       roles: ['SUPER_ADMIN', 'ADMIN', 'LIDER'] 
     },
+    { 
+      icon: ClipboardCheck, 
+      label: 'Prestação de Contas', 
+      path: '/prestacao-contas', 
+      roles: ['SUPER_ADMIN', 'ADMIN', 'LIDER'] 
+    },
   ];
 
   // Usuários - apenas ADMIN e SUPER_ADMIN
@@ -88,6 +95,7 @@ export function Sidebar() {
     if (path === '/dashboard' && pathname === '/dashboard') return true;
     if (path === '/grupos' && pathname.startsWith('/grupos')) return true;
     if (path === '/transacoes' && pathname.startsWith('/transacoes')) return true;
+    if (path === '/prestacao-contas' && pathname.startsWith('/prestacao-contas')) return true;
     if (path === '/usuarios' && pathname === '/usuarios') return true;
     if (path === '/admin' && pathname === '/admin') return true;
     return false;

@@ -33,6 +33,8 @@ model User {
   createdGroups  Group[]        @relation("GroupCreator")
   createdOrgs    Organization[] @relation("OrganizationCreator")
   transactions   Transaction[]  @relation("UserTransactions")
+  transactionsUpdated Transaction[] @relation("UserTransactionsUpdated")
+  prestacoesContasAtualizadas PrestacaoContas[] @relation("PrestacaoContasUpdatedBy")
   organization   Organization?  @relation(fields: [organizationId], references: [id])
   groups         UserGroup[]
 
@@ -51,6 +53,7 @@ model Group {
   createdBy      User?         @relation("GroupCreator", fields: [createdById], references: [id])
   organization   Organization  @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   transactions   Transaction[]
+  prestacoesContas PrestacaoContas[]
   users          UserGroup[]
 
   @@index([organizationId])
@@ -82,11 +85,14 @@ model Transaction {
   createdAt   DateTime        @default(now())
   updatedAt   DateTime        @updatedAt
   createdBy   String?         @map("created_by")
+  updatedBy   String?         @map("updated_by")
   user        User?           @relation("UserTransactions", fields: [createdBy], references: [id])
+  updatedByUser User?         @relation("UserTransactionsUpdated", fields: [updatedBy], references: [id])
   group       Group           @relation(fields: [groupId], references: [id], onDelete: Cascade)
 
   @@index([groupId])
   @@index([createdBy])
+  @@index([updatedBy])
   @@index([paymentType])
   @@index([type])
 }
@@ -114,4 +120,30 @@ enum PaymentType {
   CARTAO_CREDITO
   CARTAO_DEBITO
   TRANSFERENCIA
+}
+
+// ─── PRESTAÇÃO DE CONTAS ────────────────────────────────────────────────────
+// Um registro por grupo + mês/ano. Ausência de registro para um grupo num
+// determinado mês/ano é tratada como PENDENTE pela camada de serviço —
+// não é necessário pré-criar linhas pra cada grupo/mês.
+model PrestacaoContas {
+  id        String          @id @default(uuid())
+  groupId   String          @map("group_id")
+  mes       Int
+  ano       Int
+  status    PrestacaoStatus @default(PENDENTE)
+  updatedBy String?         @map("updated_by")
+  createdAt DateTime        @default(now())
+  updatedAt DateTime        @updatedAt
+  group     Group           @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  updatedByUser User?       @relation("PrestacaoContasUpdatedBy", fields: [updatedBy], references: [id])
+
+  @@unique([groupId, mes, ano])
+  @@index([groupId])
+  @@index([mes, ano])
+}
+
+enum PrestacaoStatus {
+  PENDENTE
+  FEITO
 }

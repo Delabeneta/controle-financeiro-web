@@ -68,11 +68,13 @@ export interface User {
   }[];
 }
 
+// Auth
 export const authAPI = {
   login: (email: string, password: string) =>
     api.post("/auth/login", { email, password }),
 };
 
+// Users
 export const usersAPI = {
   getMyGroups: () => api.get("/users/me/groups"),
   getAll: () => api.get("/users"),
@@ -86,6 +88,7 @@ export const usersAPI = {
   ) => api.patch(`/users/${id}`, data),
 };
 
+// Groups
 export const groupsAPI = {
   getAll: () => api.get("/groups"),
   getOne: (id: string) => api.get(`/groups/${id}`),
@@ -95,6 +98,7 @@ export const groupsAPI = {
     api.post("/groups", data),
 };
 
+// Transactions
 export const transactionsAPI = {
   getAll: (params?: {
     type?: string;
@@ -113,6 +117,7 @@ export const transactionsAPI = {
   update: (id: string, data: any) => api.patch(`/transactions/${id}`, data),
 };
 
+// Admin
 export const adminAPI = {
   getOrganizations: () => api.get("/admin/organizations"),
   getOrganization: (id: string) => api.get(`/admin/organizations/${id}`),
@@ -137,4 +142,15 @@ export const userGroupsAPI = {
 
 export const dashboardApi = {
   get: () => api.get("/dashboard"),
+};
+
+export const prestacaoContasAPI = {
+  getAll: (mes: number, ano: number) =>
+    api.get("/prestacao-contas", { params: { mes, ano } }),
+  update: (data: {
+    groupId: string;
+    mes: number;
+    ano: number;
+    status: "FEITO" | "PENDENTE";
+  }) => api.patch("/prestacao-contas", data),
 };

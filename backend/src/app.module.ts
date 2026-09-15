@@ -10,6 +10,7 @@ import { UserGroupsModule } from './user-groups/user-groups.module';
 import { TransactionsModule } from './transactions/transactions.module';
 import { AuthModule } from './auth/auth.module';
 import { DashboardModule } from './dashboard/dashboard.module';
+import { PrestacaoContasModule } from './prestacao-contas/prestacao-contas.module';
 
 @Module({
   imports: [
@@ -22,6 +23,7 @@ import { DashboardModule } from './dashboard/dashboard.module';
     TransactionsModule,
     AuthModule,
     DashboardModule,
+    PrestacaoContasModule,
   ],
   controllers: [AppController],
   providers: [AppService],

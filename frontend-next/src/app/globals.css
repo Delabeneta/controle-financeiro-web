@@ -65,7 +65,7 @@
   --card-foreground: #1a1a1a;
   --popover: #ffffff;
   --popover-foreground: #1a1a1a;
-  --primary: #333333;
+  --primary:  #1A2B4C;
   --primary-foreground: #fafafa;
   --secondary: #f4f4f5;
   --secondary-foreground: #18181b;
@@ -88,7 +88,7 @@
   
   --sidebar: #f8fafc;
   --sidebar-foreground: #1e293b;
-  --sidebar-primary: #333333;
+  --sidebar-primary:  #1A2B4C;
   --sidebar-primary-foreground: #f8fafc;
   --sidebar-accent: #f1f5f9;
   --sidebar-accent-foreground: #1e293b;

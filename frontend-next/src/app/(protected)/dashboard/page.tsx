@@ -1,5 +1,5 @@
 'use client';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback  } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/src/context/AuthContext';
 import { dashboardApi } from '@/src/lib/api';
@@ -15,6 +15,7 @@ import {
   Legend,
   ResponsiveContainer,
 } from 'recharts';
+import { Button } from '@/src/components/ui/button';
 
 type DashboardData = {
   totalBalance: number;
@@ -34,26 +35,28 @@ export default function DashboardPage() {
   const router = useRouter();
 
   const [loading, setLoading] = useState(true);
+
   const [dashboardData, setDashboardData] = useState<DashboardData | null>(null);
+  const [error, setError] = useState(false);
+
+  const load = useCallback(async () => {
+    try {
+      setLoading(true);
+      setError(false);
+      const res = await dashboardApi.get();
+      setDashboardData(res.data);
+    } catch (err) {
+      console.error('Erro ao carregar dashboard:', err);
+      setError(true);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
 
   useEffect(() => {
-    if (!user) return;
+    if (user) load();
+  }, [user, load]);
 
-    const load = async () => {
-      try {
-        setLoading(true);
-
-        const res = await dashboardApi.get(); 
-        setDashboardData(res.data);
-      } catch (err) {
-        console.error('Erro ao carregar dashboard:', err);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    load();
-  }, [user]);
 
   const formatCurrency = (value: number) =>
     new Intl.NumberFormat('pt-BR', {
@@ -61,14 +64,22 @@ export default function DashboardPage() {
       currency: 'BRL',
     }).format(value);
 
-  if (loading || !dashboardData) {
-    return (
-      <div className="flex items-center justify-center min-h-[400px]">
-        <Loader2 className="w-8 h-8 animate-spin text-primary" />
-      </div>
-    );
-  }
+   if (loading) {
+      return (
+        <div className="flex items-center justify-center min-h-[400px]">
+          <Loader2 className="w-8 h-8 animate-spin text-primary" />
+        </div>
+      );
+    }
 
+    if (error || !dashboardData) {
+      return (
+        <div className="flex flex-col items-center justify-center min-h-[400px] gap-4 text-center">
+          <p className="text-gray-600">Não foi possível carregar os dados.</p>
+          <Button onClick={load}>Tentar novamente</Button>
+        </div>
+      );
+    }
   return (
     <div>
       {/* Header */}

@@ -3,8 +3,6 @@ import axios from "axios";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:10000";
 
-console.log("API URL:", API_URL);
-
 export const api = axios.create({
   baseURL: API_URL,
   headers: {
@@ -154,3 +152,34 @@ export const prestacaoContasAPI = {
     status: "FEITO" | "PENDENTE";
   }) => api.patch("/prestacao-contas", data),
 };
+
+// Acorda o Render. Usa axios puro (sem interceptors) para não disparar redirect no 401.
+export async function wakeUpServer(
+  shouldStop?: () => boolean,
+  maxAttempts = 6,
+): Promise<boolean> {
+  for (let i = 0; i < maxAttempts; i++) {
+    if (shouldStop?.()) return false;
+    try {
+      await axios.get(`${API_URL}/`, { timeout: 20000 });
+      return true;
+    } catch {
+      await new Promise((r) => setTimeout(r, 2000));
+    }
+  }
+  return false;
+}
+
+export async function validateToken(
+  token: string,
+): Promise<"valid" | "invalid" | "unknown"> {
+  try {
+    await axios.get(`${API_URL}/users/me/groups`, {
+      headers: { Authorization: `Bearer ${token}` },
+      timeout: 20000,
+    });
+    return "valid";
+  } catch (err: any) {
+    return err?.response?.status === 401 ? "invalid" : "unknown";
+  }
+}

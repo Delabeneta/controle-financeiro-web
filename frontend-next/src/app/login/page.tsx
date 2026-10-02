@@ -2,31 +2,35 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { useAuth } from '@/src/context/AuthContext';
 import { Button } from '@/src/components/ui/button';
 import { Input } from '@/src/components/ui/input';
 import { Label } from '@/src/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/src/components/ui/card';
 import { Loader2, Lock, Mail, Building2 } from 'lucide-react';
+import { useAuth } from '@/src/context/AuthContext';
 
 export default function LoginPage() {
   const router = useRouter();
-  const { login } = useAuth();
+  const { login } = useAuth
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [slow, setSlow] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
     setLoading(true);
+    const timer = setTimeout(() => setSlow(true), 5000);
 
     try {
       await login(email, password);
     } catch (err) {
-      setError('E-mail ou senha incorretos');
+      setError(err instanceof Error ? err.message : 'E-mail ou senha incorretos');
     } finally {
+      clearTimeout(timer);
+      setSlow(false);
       setLoading(false);
     }
   };
@@ -57,6 +61,7 @@ export default function LoginPage() {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   className="pl-10"
+                  autoComplete="email" 
                   required
                 />
               </div>
@@ -73,6 +78,7 @@ export default function LoginPage() {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   className="pl-10"
+                  autoComplete="current-password"
                   required
                 />
               </div>
@@ -82,6 +88,12 @@ export default function LoginPage() {
               <div className="bg-destructive/10 border border-destructive/20 text-destructive px-4 py-3 rounded-lg text-sm">
                 {error}
               </div>
+            )}
+
+            {loading && slow && (
+              <p className="text-xs text-center text-muted-foreground">
+                O servidor está iniciando, pode levar até 1 minuto…
+              </p>
             )}
 
             <Button type="submit" className="w-full" disabled={loading}>

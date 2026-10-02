@@ -1,7 +1,8 @@
 
 
 import React, { createContext, useContext, useState, ReactNode, useEffect, useCallback } from 'react';
-import { api, authAPI, User } from '@/src/lib/api';
+import { api, authAPI, User, wakeUpServer, validateToken } from '@/src/lib/api';
+import { ServerWakingScreen } from '../components/ServerWakingScreen';
 import { usePathname, useRouter } from 'next/navigation';
 
 interface AuthContextType {
@@ -45,31 +46,79 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const pathname = usePathname();
   const [user, setUser] = useState<User | null>(null);
   const [mounted, setMounted] = useState(false);
+  const [serverWaking, setServerWaking] = useState(false);
+  const [serverFailed, setServerFailed] = useState(false);
+  const abortRef = React.useRef(false);
 
   useEffect(() => {
-   const initAuth = async () => {
+  let cancelled = false;
+
+  const clearSession = () => {
+    safeStorage.remove('access_token');
+    safeStorage.remove('user');
+    delete api.defaults.headers.common['Authorization'];
+  };
+
+  const initAuth = async () => {
     const token = safeStorage.get('access_token');
     const savedUser = safeStorage.get('user');
 
-    if (token && savedUser) {
-      try {
-        const userData = JSON.parse(savedUser);
-        setUser(userData);
-        api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
-        setUser(userData);
-
-      } catch {
-        safeStorage.remove('access_token');
-        safeStorage.remove('user');
-      }
+    // Sem sessão: mostra o login já e acorda o servidor em segundo plano
+    if (!token || !savedUser) {
+      setMounted(true);
+      void wakeUpServer();
+      return;
     }
 
-    setMounted(true); 
+    let userData: User;
+    try {
+      userData = JSON.parse(savedUser);
+    } catch {
+      clearSession();
+      setMounted(true);
+      return;
+    }
+
+    // Com sessão: segura a tela até o servidor responder e o token ser validado
+    setServerWaking(true);
+
+    const online = await wakeUpServer(() => cancelled || abortRef.current);
+    if (cancelled || abortRef.current) return;
+    if (!online) {
+      setServerFailed(true);
+      return;
+    }
+
+    const status = await validateToken(token);
+    if (cancelled || abortRef.current) return;
+
+    if (status === 'invalid') {
+      clearSession(); // sem user -> o efeito de redirect manda para /login
+    } else {
+      api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+      setUser(userData);
+    }
+
+    setServerWaking(false);
+    setMounted(true);
   };
-  
+
   initAuth();
+  return () => {
+    cancelled = true;
+  };
 }, []);
 
+const handleBackToLogin = () => {
+  abortRef.current = true;
+  safeStorage.remove('access_token');
+  safeStorage.remove('user');
+  delete api.defaults.headers.common['Authorization'];
+  setServerWaking(false);
+  setServerFailed(false);
+  setUser(null);
+  setMounted(true);
+};
   const hasRedirected = React.useRef(false);
   useEffect(() => {
     if (!mounted || hasRedirected.current) return;
@@ -82,7 +131,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       hasRedirected.current = true;
       router.replace('/dashboard');
     }
-  }, [mounted, user, router]);
+  }, [mounted, user, pathname, router]);
+
+
+  
 
   const login = async (email: string, password: string) => {
     try {
@@ -96,10 +148,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setUser(userData);
       router.replace('/dashboard');
     } catch (error) {
-      console.error('Login error:', error);
-      throw new Error('E-mail ou senha incorretos');
-    }
-  };
+  console.error('Login error:', error);
+  const semResposta = !(error as { response?: unknown })?.response;
+  throw new Error(
+    semResposta
+      ? 'Não foi possível conectar ao servidor. Tente novamente em instantes.'
+      : 'E-mail ou senha incorretos',
+  );
+} };
 
   const logout = useCallback(() => {
     safeStorage.remove('access_token');
@@ -118,24 +174,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     });
   }, []);
 
-  if (!mounted) return (
-  <div style={{ 
-    display: 'flex', 
-    alignItems: 'center', 
-    justifyContent: 'center', 
-    minHeight: '100vh',
-    backgroundColor: '#f9fafb'
-  }}>
-    <div style={{
-      width: '2rem',
-      height: '2rem',
-      border: '2px solid #e5e7eb',
-      borderTopColor: '#3b82f6',
-      borderRadius: '50%',
-      animation: 'spin 1s linear infinite'
-    }} />
-    </div>
-);
+    if (!mounted) {
+  return (
+    <ServerWakingScreen
+      waking={serverWaking}
+      failed={serverFailed}
+      onRetry={() => window.location.reload()}
+      onBackToLogin={handleBackToLogin}
+    />
+  );
+}
 
   return (
     <AuthContext.Provider value={{ user, login, logout, updateUser, isAuthenticated: !!user,
